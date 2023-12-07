@@ -1,0 +1,25 @@
+BasedOnStyle: WebKit
+NamespaceIndentation: Inner
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+AlignConsecutiveMacros: AcrossEmptyLines
+
+BreakBeforeBinaryOperators: NonAssignment
+
+AllowShortLoopsOnASingleLine: false
+NamespaceIndentation: All
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: true
+    AfterControlStatement: false
+    AfterFunction: false
+
+AlignAfterOpenBracket: DontAlign
+BinPackArguments: false
+BinPackParameters: false
+
+ExperimentalAutoDetectBinPacking: false
+AllowAllParametersOfDeclarationOnNextLine: false
