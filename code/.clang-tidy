@@ -15,3 +15,6 @@ CheckOptions:
   - { key: readability-identifier-naming.MethodCase, value: lower_case  }
   - { key: readability-identifier-naming.PrivateMemberPrefix, value: _ }
   - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
+  - { key: readability-identifier-naming.LocalConstantCase, value: lower_case }
+  - { key: readability-identifier-naming.GlobalConstantCase, value: UPPER_CASE }
+

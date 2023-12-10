@@ -1,5 +1,21 @@
 {
     "dependencies": [
-        "glm"
+        "glm",
+        {
+            "name": "assimp",
+            "platform": "!emscripten"
+        },
+        {
+            "name": "glfw3",
+            "platform": "!emscripten"
+        },
+        {
+            "name": "opengl",
+            "platform": "!emscripten"
+        },
+        {
+            "name": "glew",
+            "platform": "!emscripten"
+        }
     ]
 }

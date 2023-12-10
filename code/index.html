@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Graphics</title>
+</head>
+
+<body>
+    <h1>Graphics</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <script>
+        var WasmModuleDemos = {
+            canvas: document.getElementById('canvas'),
+            onRuntimeInitialized: function () {
+                Module._main(['arg1', 'arg2']);
+            }
+        };
+    </script>
+    <p>Created by Willis Medwell</p>
+    <script src="Demos.js"></script>
+</body>
+
+</html>

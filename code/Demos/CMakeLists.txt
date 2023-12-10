@@ -6,16 +6,32 @@ file(GLOB_RECURSE DEMOS_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
 file(COPY ${CMAKE_SOURCE_DIR}/.clang-format DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 
 add_executable(Demos ${DEMOS_SOURCES} ${DEMOS_HEADERS})
 
 if(DEFINED EMSCRIPTEN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -s DEMANGLE_SUPPORT=1 -s FORCE_FILESYSTEM=1 -s ASSERTIONS=1 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s NO_DISABLE_EXCEPTION_CATCHING")
+    # Emscripten specific linking.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_WEBGL2=1 -s USE_GLFW=3 -s FULL_ES3=1")
+    # Function exports. 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main'") 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORT_NAME=\"'WasmModuleDemos'\" -s FORCE_FILESYSTEM --bind")
+    # Javascript Module name.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORT_NAME=\"'WasmModuleDemos'\"")
+    # Move index.html.
+    file(COPY ${CMAKE_SOURCE_DIR}/index.html DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    
+    # Asset embedding.
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+    file(GLOB_RECURSE ASSET_FILES "${CMAKE_BINARY_DIR}/assets/*")
+    set(PRELOAD_FILES "")
+    foreach(FILE ${ASSET_FILES})
+        file(RELATIVE_PATH REL_FILE ${CMAKE_BINARY_DIR} ${FILE})
+        set(PRELOAD_FILES "${PRELOAD_FILES} --preload-file ${REL_FILE}")
+    endforeach()
+    message(STATUS "PRELOAD FILES: \"${PRELOAD_FILES}\"")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PRELOAD_FILES}")
+else()
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 target_link_libraries(Demos PUBLIC Engine)

@@ -1,0 +1,4 @@
+[submodule "code/Engine/lib/Assimp"]
+	path = code/Engine/lib/Assimp
+	url = https://github.com/assimp/assimp.git
+	branch = master
