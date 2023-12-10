@@ -16,7 +16,7 @@
 using namespace std::literals;
 
 auto isModelFormatSupported(const std::string_view& extension) -> bool {
-    static constexpr auto supported_model_extensions = std::to_array({ ".fbx"sv, ".glb"sv, ".gltf"sv });
+    static constexpr auto supported_model_extensions = std::to_array({ ".fbx"sv, ".gltf"sv });
 
     auto is_same_extension = [&](const auto& ext) {
         return extension == ext;
