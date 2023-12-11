@@ -9,7 +9,10 @@ An experimental project exploring a range of tools, techniques, and topics relat
 - [ ] Model Rendering
 - [ ] Animaion Rendering
 
-## Libraries & Licenses
-- OpenGL Mathematics. *Which is licensed under The Happy Bunny License and the MIT License. See [LICENSE_GLM](LICENSES/LICENSE_GLM) for more details.*
+## Building
+How to build can be found [here](docs/building.md)
 
-- Assimp Model Import Library. *Which is licensed under the BSD License. See [LICENSE_ASSIMP](LICENSES/LICENSE_ASSIMP) for more details.*
+## Libraries & Licenses
+- OpenGL Mathematics. *Which is licensed under The Happy Bunny License and the MIT License. <br>See [LICENSE_GLM](LICENSES/LICENSE_GLM) for more details.*
+
+- Assimp Model Import Library. *Which is licensed under the BSD License. <br>See [LICENSE_ASSIMP](LICENSES/LICENSE_ASSIMP) for more details.*
