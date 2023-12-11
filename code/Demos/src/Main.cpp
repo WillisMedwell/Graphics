@@ -1,3 +1,4 @@
+#include "App.hpp"
 #include "Models/Staging.hpp"
 #include "Platform.hpp"
 
@@ -12,9 +13,7 @@ auto print_then_quit = [](std::string& error) {
 };
 
 auto print_num_faces = [](Models::Staging::Model& model) {
-    std::cout << "Triangle Count: "
-              << model.index_data.size() / 3
-              << std::endl;
+    std::println("Triangle Count: {}", model.index_data.size() / 3);
 };
 
 void timeLoadModel(const std::string& filePath) {
@@ -25,7 +24,27 @@ void timeLoadModel(const std::string& filePath) {
     std::cout << "Loading " << filePath << " took " << duration.count() << " milliseconds." << std::endl;
 }
 
+struct Logic {
+    void init(AppData& data) {
+        timeLoadModel("assets/test.fbx");
+    }
+    void update(float dt, AppData& data) {
+    }
+    void stop() {
+    }
+    constexpr static auto NAME = std::string_view { "Graphics" };
+};
+
 int main() {
-    timeLoadModel("assets/test.fbx");
+    App<Logic> app;
+
+    app.init();
+    while (app.is_running()) {
+        app.poll_inputs();
+        app.update();
+        app.render();
+    }
+    app.stop();
+
     return 0;
 }

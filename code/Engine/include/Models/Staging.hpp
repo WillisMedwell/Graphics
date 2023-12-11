@@ -11,7 +11,6 @@
 #include <glm/vec3.hpp>
 
 namespace Models::Staging {
-
     struct Vertex {
         glm::vec3 position;
         glm::vec3 normal;
