@@ -12,23 +12,22 @@ add_library(Engine STATIC ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
 find_package(glm CONFIG REQUIRED)
 
-
 if(DEFINED EMSCRIPTEN)
-    add_definitions(-DBUILD_SHARED_LIBS=OFF)
-    add_definitions(-DASSIMP_BUILD_TESTS=OFF)
-    add_definitions(-DASSIMP_BUILD_TESTS=OFF)
-    add_definitions(-DASSIMP_BUILD_GLTF_IMPORTER=ON)
-    add_definitions(-DASSIMP_BUILD_DRACO=ON)
-    
-    add_subdirectory(lib/Assimp)
+    set(BUILD_SHARED_LIBS OFF)
+    set(ASSIMP_BUILD_TESTS OFF)
+    set(ASSIMP_BUILD_GLTF_IMPORTER OFF)
+    set(ASSIMP_BUILD_DRACO OFF)
+    set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
+    set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
+    set(ASSIMP_BUILD_FBX_IMPORTER ON)
 
+    add_subdirectory(lib/Assimp)
     target_include_directories(Engine PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         lib/Assimp/include
         ${CMAKE_BINARY_DIR}/assimp/include # config file
     )
-
 
 else()
     find_package(assimp CONFIG REQUIRED)

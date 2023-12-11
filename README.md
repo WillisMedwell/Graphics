@@ -3,7 +3,8 @@ An experimental project exploring a range of tools, techniques, and topics relat
 
 ## Milestones
 *Italics = Currently in development.*
-- [ ] *Model Loading*
+- [x] Model Loading
+- [ ] *Rendering of base Models*  
 - [ ] Animation Loading
 - [ ] Model Rendering
 - [ ] Animaion Rendering
