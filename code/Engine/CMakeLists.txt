@@ -12,6 +12,8 @@ add_library(Engine STATIC ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
 find_package(glm CONFIG REQUIRED)
 
+
+
 if(DEFINED EMSCRIPTEN)
     set(BUILD_SHARED_LIBS OFF)
     set(ASSIMP_BUILD_TESTS OFF)
@@ -28,16 +30,23 @@ if(DEFINED EMSCRIPTEN)
         lib/Assimp/include
         ${CMAKE_BINARY_DIR}/assimp/include # config file
     )
-
+    target_link_libraries(Engine PUBLIC glm::glm assimp::assimp)
+    target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 else()
+    find_package(OpenGL REQUIRED) 
     find_package(assimp CONFIG REQUIRED)
+    find_package(GLFW3 CONFIG REQUIRED)
+    find_package(GLEW REQUIRED)
+
     target_include_directories(Engine PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
+    target_link_libraries(Engine PUBLIC glm::glm assimp::assimp OpenGL::GL GLEW::GLEW glfw)
+    target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR})
 endif()
 
-target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(Engine PUBLIC glm::glm assimp::assimp)
+
+
 
 target_compile_options(Engine PRIVATE -fexperimental-library)

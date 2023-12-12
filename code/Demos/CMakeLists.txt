@@ -8,10 +8,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 
 add_executable(Demos ${DEMOS_SOURCES} ${DEMOS_HEADERS})
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
-
-
 
 if(DEFINED EMSCRIPTEN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")   
@@ -19,12 +16,9 @@ if(DEFINED EMSCRIPTEN)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g -s DEMANGLE_SUPPORT=1 -s FORCE_FILESYSTEM=1 -s ASSERTIONS=1 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s NO_DISABLE_EXCEPTION_CATCHING")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Os")
     
-    # Emscripten specific linking.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_WEBGL2=1 -s USE_GLFW=3 -s FULL_ES3=1")
-    # Function exports. 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main'") 
-    # Javascript Module name.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORT_NAME=\"'WasmModuleDemos'\"")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_WEBGL2=1 -s USE_GLFW=3 -s FULL_ES3=1") 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' -s EXPORT_NAME=\"'WasmModuleDemos'\"") 
+    
     # Move index.html.
     file(COPY ${CMAKE_SOURCE_DIR}/index.html DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     

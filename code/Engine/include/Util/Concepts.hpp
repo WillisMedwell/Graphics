@@ -60,6 +60,4 @@ namespace Util {
     static_assert(HasIterators<std::vector<int>>);
     static_assert(!HasIterators<int[20]>);
 
-
-
 } // namespace Util

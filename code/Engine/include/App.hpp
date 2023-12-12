@@ -7,6 +7,9 @@
 #include <string_view>
 
 #include "Util/Concepts.hpp"
+#include "Util/ErrorHandling.hpp"
+
+#include "Renderer/OpenglContext.hpp"
 
 struct AppData {
 };
@@ -34,6 +37,8 @@ private:
     AppLogic _logic;
     AppData _data;
 
+    Renderer::OpenglContext _context;
+
     bool _has_init = false;
     bool _must_stop = false;
 
@@ -41,6 +46,8 @@ private:
 
 public:
     auto init() -> void {
+        _context.init(_logic.NAME, 1000, 1000).on_error(Util::ErrorHandling::print);
+
         _logic.init(_data);
         _has_init = true;
         std::println("The App \"{}\" has successfully initialised.", _logic.NAME);
@@ -66,3 +73,29 @@ public:
         stop();
     }
 };
+
+/*
+// The basic App-Logic System is shown below:
+
+struct Logic {
+    void init(AppData& data) {
+    }
+    void update(float dt, AppData& data) {
+    }
+    void stop() {
+    }
+    constexpr static auto NAME = std::string_view { "App-Name" };
+};
+
+void main() {
+    App<Logic> app;
+
+    app.init();
+    while (app.is_running()) {
+        app.poll_inputs();
+        app.update();
+        app.render();
+    }
+    app.stop();
+}
+*/
