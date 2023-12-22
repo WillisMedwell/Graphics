@@ -7,4 +7,4 @@ project(Graphics)
 
 add_subdirectory(Engine)
 add_subdirectory(Demos)
-
+add_subdirectory(Test)

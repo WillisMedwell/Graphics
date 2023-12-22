@@ -7,6 +7,8 @@
 #include <span>
 #include <string_view>
 
+#include "Util/StaticVector.hpp"
+
 auto print_then_quit = [](std::string& error) {
     std::cerr << error
               << std::endl;
@@ -37,6 +39,8 @@ struct Logic {
 
 int main() {
     App<Logic> app;
+
+    StaticVector<std::string_view, 10> sv{"hi", "there"};
 
     app.init();
     while (app.is_running()) {
