@@ -28,7 +28,7 @@ namespace Util {
 
     namespace ErrorHandling {
 
-        auto print = [](auto error) {
+        inline static auto print = [](auto error) {
             if constexpr (std::is_same_v<ErrorMsg, std::decay_t<decltype(error)>>) {
                 std::cerr << error.msg << std::endl;
             } else {

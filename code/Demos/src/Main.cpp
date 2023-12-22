@@ -30,25 +30,17 @@ struct Logic {
     void init(AppData& data) {
         timeLoadModel("assets/test.fbx");
     }
-    void update(float dt, AppData& data) {
+    void update(float dt, AppData& data, const AppInput& input) {
+        data.should_close = true;
     }
     void stop() {
     }
-    constexpr static auto NAME = std::string_view { "Graphics" };
 };
 
 int main() {
     App<Logic> app;
-
-    StaticVector<std::string_view, 10> sv{"hi", "there"};
-
-    app.init();
-    while (app.is_running()) {
-        app.poll_inputs();
-        app.update();
-        app.render();
-    }
-    app.stop();
+ 
+    AutoRunApp(app);
 
     return 0;
 }

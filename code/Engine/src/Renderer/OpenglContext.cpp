@@ -112,6 +112,14 @@ namespace Renderer {
     inline std::optional<GLFWwindow*> OpenglContext::window = std::nullopt;
     inline uint_fast16_t OpenglContext::window_width { 0 }, OpenglContext::window_height { 0 };
 
+    void OpenglContext::validate_window() {
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+            if (!OpenglContext::window) {
+                Util::ErrorHandling::print(Util::ErrorMsg("Invalid window handle"));
+            }
+        }
+    }
+
     auto OpenglContext::init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> Util::Result<OpenglContext*, Util::ErrorMsg> {
         if (glfwInit() == GLFW_FALSE) {
             return Util::ErrorMsg("GLFW3 failed to be initialised");
@@ -151,7 +159,14 @@ namespace Renderer {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
+        validate_window();
+
         return this;
+    }
+
+    auto OpenglContext::should_close() -> bool {
+        validate_window();
+        return glfwWindowShouldClose(window.value());
     }
 
     void OpenglContext::stop() {
@@ -162,11 +177,7 @@ namespace Renderer {
     }
 
     void OpenglContext::poll_events() {
-        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
-            if (!window) {
-                Util::ErrorHandling::print(Util::ErrorMsg("Trying to poll events of an invalid window"));
-            }
-        }
+        validate_window();
         int width, height;
         glfwGetWindowSize(*window, &width, &height);
         glfwPollEvents();
