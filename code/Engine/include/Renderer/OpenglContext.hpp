@@ -5,8 +5,7 @@
 #include <optional>
 #include <string_view>
 
-#include "Util/Result.hpp"
-#include "Util/ErrorHandling.hpp"
+#include "Util/Util.hpp"
 
 namespace Renderer {
     class OpenglContext

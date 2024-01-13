@@ -7,8 +7,6 @@
 #include <type_traits>
 #include <vector>
 
-
-
 namespace Util {
     template <typename T>
     concept HasMoveConstructor = requires(T value, T&& move) {

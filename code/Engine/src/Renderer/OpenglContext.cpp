@@ -1,7 +1,6 @@
 #include "Renderer/OpenglContext.hpp"
 
 #include "Config.hpp"
-#include "Util/ErrorHandling.hpp"
 
 #include <cassert>
 #include <iostream>

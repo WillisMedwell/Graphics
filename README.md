@@ -2,7 +2,7 @@
 An experimental project exploring a range of tools, techniques, and topics related to graphics (OpenGL). Using Emscripten, the project is also portable to the web. The repo is broken into several projects:
 - **Engine** is the core rendering and window management.
 - **Demos** provides the logic of the app. 
-- **Test** includes unit and integration tests.
+- **Test** includes unit and integration tests - both native and browser based.
 
 ## Milestones
 *Italics = Currently in development.*
@@ -11,6 +11,7 @@ An experimental project exploring a range of tools, techniques, and topics relat
 - [ ] Animation Loading
 - [ ] Model Rendering
 - [ ] Animaion Rendering
+- [ ] Custom ECS (currently using entt)
 
 ## Building
 How to build can be found [here](docs/building.md)
@@ -21,3 +22,5 @@ How to build can be found [here](docs/building.md)
 - Assimp Model Import Library. *Which is licensed under the BSD License. <br>See [LICENSE_ASSIMP](LICENSES/LICENSE_ASSIMP) for more details.*
 
 - Google Test Framework. *Which is licensed under a revised BSD 2-Clause License. <br> See [LICENSE_GTEST](LICENSES/LICENSE_GTEST) for more details.*
+
+- EnTT Entity Component System Library. *Which is licensed under the MIT License. <br> See [LICENSE_ENTT](LICENSES/LICENSE_ENTT) for more details.* 

@@ -1,12 +1,10 @@
 {
     "dependencies": [
         "glm",
-        "benchmark",
         "gtest",
-        {
-            "name": "assimp",
-            "platform": "!emscripten"
-        },
+        "entt",
+        "assimp",
+        "bullet3",
         {
             "name": "glfw3",
             "platform": "!emscripten"

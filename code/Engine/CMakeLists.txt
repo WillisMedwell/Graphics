@@ -11,6 +11,8 @@ file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 add_library(Engine STATIC ${ENGINE_SOURCES} ${ENGINE_HEADERS})
 
 find_package(glm CONFIG REQUIRED)
+find_package(entt CONFIG REQUIRED)
+
 
 
 
@@ -30,7 +32,7 @@ if(DEFINED EMSCRIPTEN)
         lib/Assimp/include
         ${CMAKE_BINARY_DIR}/assimp/include # config file
     )
-    target_link_libraries(Engine PUBLIC glm::glm assimp::assimp)
+    target_link_libraries(Engine PUBLIC glm::glm assimp::assimp EnTT::EnTT)
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 else()
     find_package(OpenGL REQUIRED) 
@@ -42,7 +44,7 @@ else()
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
-    target_link_libraries(Engine PUBLIC glm::glm assimp::assimp OpenGL::GL GLEW::GLEW glfw)
+    target_link_libraries(Engine PUBLIC glm::glm assimp::assimp OpenGL::GL GLEW::GLEW glfw EnTT::EnTT)
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR})
 endif()
 

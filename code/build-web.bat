@@ -8,6 +8,7 @@ if not exist "build-web\" (
 cd build-web
 
 call emcmake cmake .. -DCMAKE_TOOLCHAIN_FILE=%VCPKG_PATH%/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=wasm32-emscripten -DEMSCRIPTEN=1 -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=%EMSCRIPTEN%cmake/Modules/Platform/Emscripten.cmake -DCMAKE_BUILD_TYPE=Release
-call cmake --build . --target Demos 
+call cmake --build . --config Release
+
 
 cd ..

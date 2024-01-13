@@ -12,6 +12,31 @@ if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
 endif()
 
+if(DEFINED EMSCRIPTEN)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")   
+    
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g -s DEMANGLE_SUPPORT=1 -s FORCE_FILESYSTEM=1 -s ASSERTIONS=1 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s NO_DISABLE_EXCEPTION_CATCHING")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Os")
+    
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_WEBGL2=1 -s USE_GLFW=3 -s FULL_ES3=1") 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main'") 
+        
+    # Asset embedding.
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
+    file(GLOB_RECURSE ASSET_FILES "${CMAKE_BINARY_DIR}/assets/*")
+    set(PRELOAD_FILES "")
+    foreach(FILE ${ASSET_FILES})
+        file(RELATIVE_PATH REL_FILE ${CMAKE_BINARY_DIR} ${FILE})
+        set(PRELOAD_FILES "${PRELOAD_FILES} --preload-file ${REL_FILE}")
+    endforeach()
+    message(STATUS "PRELOAD FILES: \"${PRELOAD_FILES}\"")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PRELOAD_FILES}")
+else()
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
+
 enable_testing()
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(Test PRIVATE Engine GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)

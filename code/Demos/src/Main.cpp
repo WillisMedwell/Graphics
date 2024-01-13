@@ -18,12 +18,12 @@ auto print_num_faces = [](Models::Staging::Model& model) {
     std::println("Triangle Count: {}", model.index_data.size() / 3);
 };
 
-void timeLoadModel(const std::string& filePath) {
+void timeLoadModel(const std::string& file_path) {
     auto start = std::chrono::high_resolution_clock::now();
-    Models::Staging::loadModel(filePath).on_error(print_then_quit).on_value(print_num_faces);
+    Models::Staging::loadModel(file_path).on_error(print_then_quit).on_value(print_num_faces);
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> duration = end - start;
-    std::cout << "Loading " << filePath << " took " << duration.count() << " milliseconds." << std::endl;
+    std::cout << "Loading " << file_path << " took " << duration.count() << " milliseconds." << std::endl;
 }
 
 struct Logic {
@@ -37,10 +37,7 @@ struct Logic {
     }
 };
 
-int main() {
-    App<Logic> app;
- 
-    AutoRunApp(app);
-
+int main() { 
+    autoRunApp<Logic>();
     return 0;
 }

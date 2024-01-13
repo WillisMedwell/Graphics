@@ -1,5 +1,4 @@
 #pragma once
 
-namespace Models {
-    
-} // Models
+#include "Models/Staging.hpp"
+#include "Models/Static.hpp"

@@ -6,17 +6,18 @@
 #include <print>
 #include <string_view>
 
-#include "Util/Concepts.hpp"
-#include "Util/ErrorHandling.hpp"
+#include <entt/entt.hpp>
 
-#include "Renderer/OpenglContext.hpp"
+#include "Util/Util.hpp"
+#include "Renderer/Renderer.hpp"
 
 struct AppData {
     bool should_close = false;
+    entt::registry ecs;
 };
 
 struct AppInput {
-
+    
 };
 
 template <typename T>
@@ -78,8 +79,10 @@ public:
     }
 };
 
-void AutoRunApp(auto app)
+template<HasAppLogic Logic>
+void autoRunApp()
 {
+    App<Logic> app;
     app.init("AutoApp", 400, 400);
     while (app.is_running()) {
         app.poll_events();
