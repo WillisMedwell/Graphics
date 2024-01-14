@@ -9,13 +9,13 @@ using namespace std::literals;
 
 #ifdef CONFIG_TARGET_NATIVE
 static void GLAPIENTRY openglDebugCallback(
-    GLenum source,
-    GLenum type,
-    GLuint id,
-    GLenum severity,
-    GLsizei length,
-    const GLchar* message,
-    const void* userParam) {
+    GLenum source [[maybe_unused]],
+    GLenum type [[maybe_unused]],
+    GLuint id [[maybe_unused]],
+    GLenum severity [[maybe_unused]],
+    GLsizei length [[maybe_unused]],
+    const GLchar* message [[maybe_unused]],
+    const void* userParam [[maybe_unused]]) {
     std::string sourceStr, typeStr, severityStr;
 
     // Decode the 'source' parameter
@@ -103,7 +103,7 @@ static void GLAPIENTRY openglDebugCallback(
 }
 #endif
 
-static void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+static void framebufferSizeCallback(GLFWwindow* window [[maybe_unused]], int width, int height) {
     glViewport(0, 0, width, height);
 }
 
@@ -114,24 +114,24 @@ namespace Renderer {
     void OpenglContext::validate_window() {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
             if (!OpenglContext::window) {
-                Util::ErrorHandling::print(Util::ErrorMsg("Invalid window handle"));
+                Utily::ErrorHandler::print_then_quit(Utily::Error("Invalid window handle"));
             }
         }
     }
 
-    auto OpenglContext::init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> Util::Result<OpenglContext*, Util::ErrorMsg> {
+    auto OpenglContext::init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> Utily::Result<void, Utily::Error> {
         if (glfwInit() == GLFW_FALSE) {
-            return Util::ErrorMsg("GLFW3 failed to be initialised");
+            return Utily::Error("GLFW3 failed to be initialised");
         }
         if (window.has_value()) {
-            return this;
+            return {};
         }
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
         window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
         if (!window) {
-            return Util::ErrorMsg("GLFW3 failed to create a window");
+            return Utily::Error("GLFW3 failed to create a window");
         }
         window_width = width;
         window_height = height;
@@ -140,7 +140,7 @@ namespace Renderer {
 #ifdef CONFIG_TARGET_NATIVE
         glewExperimental = GL_TRUE;
         if (glewInit() != GLEW_OK) {
-            return Util::ErrorMsg("Glew failed to be initialised");
+            return Utily::Error("Glew failed to be initialised");
         }
 
         if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::ALL) {
@@ -160,7 +160,7 @@ namespace Renderer {
 
         validate_window();
 
-        return this;
+        return {};
     }
 
     auto OpenglContext::should_close() -> bool {

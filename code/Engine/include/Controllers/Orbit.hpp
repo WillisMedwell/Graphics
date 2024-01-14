@@ -1,6 +1,0 @@
-
-namespace Controllers {
-    class Orbit {
-
-    };
-}

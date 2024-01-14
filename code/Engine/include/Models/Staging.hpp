@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Util/Util.hpp"
+#include <Utily/Utily.hpp>
 
 #include <cstdint>
 #include <filesystem>
@@ -29,5 +29,5 @@ namespace Models::Staging {
         bool has_animations = false;
     };
 
-    [[nodiscard]] auto loadModel(const std::filesystem::path& path) -> Util::Result<Staging::Model, std::string>;
+    [[nodiscard]] auto loadModel(const std::filesystem::path& path) -> Utily::Result<Staging::Model, Utily::Error>;
 } // Models::Staging

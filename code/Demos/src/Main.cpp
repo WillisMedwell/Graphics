@@ -1,17 +1,19 @@
 #include "App.hpp"
-#include "Models/Staging.hpp"
 #include "Config.hpp"
+#include "Models/Staging.hpp"
 
 #include <chrono>
 #include <iostream>
 #include <span>
 #include <string_view>
 
-#include "Util/StaticVector.hpp"
+#include <Utily/Utily.hpp>
 
-auto print_then_quit = [](std::string& error) {
-    std::cerr << error
-              << std::endl;
+auto print_then_quit = [](auto& error) {
+    std::cerr
+        << error.what()
+        << std::endl;
+    exit(1);
 };
 
 auto print_num_faces = [](Models::Staging::Model& model) {
@@ -26,18 +28,29 @@ void timeLoadModel(const std::string& file_path) {
     std::cout << "Loading " << file_path << " took " << duration.count() << " milliseconds." << std::endl;
 }
 
+struct Data {
+    Cameras::StationaryPerspective camera {
+        glm::vec3(0, 0, 0),
+        glm::vec3(1, 0, 0),
+        90.0f
+    };
+};
+
 struct Logic {
-    void init(AppData& data) {
-        timeLoadModel("assets/test.fbx");
+    void init(Data& data) {
     }
-    void update(float dt, AppData& data, const AppInput& input) {
-        data.should_close = true;
+    void update(float dt, const AppInput& input, AppState& state, Data& data) {
+        state.should_close = true;
+    }
+    void draw(AppRenderer& renderer, Data& data) {
+        const auto proj_mat = data.camera.projection_matrix(renderer.window_width, renderer.window_height);
+        const auto view_mat = data.camera.view_matrix();
     }
     void stop() {
     }
 };
 
-int main() { 
-    autoRunApp<Logic>();
+int main() {
+    autoRunApp<Data, Logic>();
     return 0;
 }

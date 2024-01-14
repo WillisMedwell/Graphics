@@ -13,6 +13,8 @@
 #include <ranges>
 #include <span>
 
+#include <Utily/Utily.hpp>
+
 using namespace std::literals;
 
 auto isModelFormatSupported(const std::string_view& extension) -> bool {
@@ -25,15 +27,15 @@ auto isModelFormatSupported(const std::string_view& extension) -> bool {
     return std::ranges::any_of(supported_model_extensions, is_same_extension);
 }
 
-auto readRawFile(const std::filesystem::path& path) -> Util::Result<std::vector<char>, std::string_view> {
+auto readRawFile(const std::filesystem::path& path) -> Utily::Result<std::vector<char>, Utily::Error> {
     if (!std::filesystem::exists(path)) {
-        return "The file does not exist"sv;
+        return Utily::Error("The file does not exist");
     }
 
     std::ifstream infile(path, std::ios::binary);
 
     if (!infile.is_open()) {
-        return "The file is in use"sv;
+        return Utily::Error("The file is in use");
     }
 
     std::vector<char> raw_contents;
@@ -44,7 +46,7 @@ auto readRawFile(const std::filesystem::path& path) -> Util::Result<std::vector<
     infile.read(raw_contents.data(), raw_contents.size());
 
     if (!infile.good()) {
-        return "Error reading the file"sv;
+        return Utily::Error("Error reading the file");
     }
 
     return raw_contents;
@@ -88,22 +90,26 @@ auto importMeshData(Models::Staging::Model* model_ptr, std::span<aiMesh*> assimp
 }
 
 namespace Models::Staging {
-    auto loadModel(const std::filesystem::path& path) -> Util::Result<Staging::Model, std::string> {
+    auto loadModel(const std::filesystem::path& path) -> Utily::Result<Staging::Model, Utily::Error> {
         const auto ext = path.extension().string();
 
         if (!isModelFormatSupported(ext)) {
-            return std::format(
-                "Not going to load model \"{}\", the format is not supported.",
-                path.string());
+            return Utily::Error {
+                std::format(
+                    "Not going to load model \"{}\", the format is not supported.",
+                    path.string())
+            };
         }
 
         auto maybe_file_contents = readRawFile(path);
 
         if (maybe_file_contents.has_error()) {
-            return std::format(
-                "Failed to load model \"{}\". The error was \"{}\".",
-                path.string(),
-                maybe_file_contents.error());
+            return Utily::Error {
+                std::format(
+                    "Failed to load model \"{}\". The error was \"{}\".",
+                    path.string(),
+                    maybe_file_contents.error().what())
+            };
         }
         const auto& file_contents = maybe_file_contents.value();
 
@@ -116,10 +122,12 @@ namespace Models::Staging {
             ext.c_str());
 
         if (assimp_scene == nullptr) {
-            return std::format(
-                "Failed to load model \"{}\". The error was: \"{}\"",
-                path.string(),
-                importer.GetErrorString());
+            return Utily::Error {
+                std::format(
+                    "Failed to load model \"{}\". The error was: \"{}\"",
+                    path.string(),
+                    importer.GetErrorString())
+            };
         }
 
         Staging::Model model;
@@ -128,7 +136,6 @@ namespace Models::Staging {
         auto assimp_animations = std::span { assimp_scene->mAnimations, assimp_scene->mNumAnimations };
 
         importMeshData(&model, assimp_meshes);
-
         importAnimationData(&model, assimp_animations);
 
         model.has_animations = false;

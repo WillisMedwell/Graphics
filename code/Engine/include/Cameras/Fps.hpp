@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Controllers {
+namespace Cameras {
     class Fps {
 
     };
