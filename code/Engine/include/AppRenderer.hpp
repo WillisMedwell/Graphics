@@ -11,5 +11,5 @@ public:
     float window_height;
 
     [[nodiscard]] auto add_shader(std::string_view vertex, std::string_view fragment) noexcept -> Utily::Result<int, Utily::Error>;
-    [[nodiscard]] auto find_shader(int shader_id) noexcept -> Utily::Result<Renderer::Shader*, Utily::Error>;
+    [[nodiscard]] auto get_shader(int shader_id) noexcept -> Renderer::Shader&;
 };

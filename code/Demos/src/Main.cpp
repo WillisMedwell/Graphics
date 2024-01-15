@@ -37,7 +37,7 @@ struct Data {
 };
 
 struct Logic {
-    void init(Data& data) {
+    void init(AppRenderer& renderer, Data& data) {
     }
     void update(float dt, const AppInput& input, AppState& state, Data& data) {
         state.should_close = true;

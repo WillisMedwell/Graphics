@@ -4,7 +4,6 @@
 
 using namespace std::literals;
 
-
 namespace Renderer {
     Shader::Shader(Shader&& other)
         : _program_id(std::exchange(other._program_id, std::nullopt))
@@ -17,16 +16,16 @@ namespace Renderer {
 #elif defined(CONFIG_TARGET_WEB)
             "#version 300 core \n"sv;
 #else
-            "#bad version\n"sv;
+            "#bad version \n"sv;
 #endif
         static std::string versioned_source { shader_verison };
         versioned_source.resize(shader_verison.size());
         versioned_source.append(source);
 
-        uint32_t shader = glCreateShader((int32_t)type);
         const char* src = versioned_source.data();
 
-        glShaderSource(shader, versioned_source.size(), &src, nullptr);
+        uint32_t shader = glCreateShader((int32_t)type);
+        glShaderSource(shader, 1, &src, nullptr);
         glCompileShader(shader);
 
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
@@ -36,20 +35,15 @@ namespace Renderer {
             if (compile_status == GL_FALSE) {
                 int32_t length = 0;
                 glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-                std::vector<char> error_chars(length);
-                glGetShaderInfoLog(shader, length, &length, error_chars.data());
-
-                std::cerr
-                    << "Shader failed to compile: "
-                    << "\""
-                    << path.string()
-                    << "\".\n"
-                    << std::string_view(error_chars)
-                    << '\n'
-                    << std::endl;
-
+                std::string error_msg;
+                error_msg.resize(length);
+                glGetShaderInfoLog(shader, length, &length, error_msg.data());
                 glDeleteShader(shader);
-                exit(EXIT_FAILURE);
+                return Utily::Error {
+                    std::format(
+                        "Shader failed to compile where the error was:\n \"{}\"",
+                        error_msg)
+                };
             }
         }
         return shader;
@@ -59,21 +53,139 @@ namespace Renderer {
         if (_program_id) {
             return Utily::Error { "Trying to override in-use shader" };
         }
+
+        _program_id = glCreateProgram();
+
+        Utily::Result vr = Shader::compile_shader(Shader::Type::VERT, vert);
+        Utily::Result fr = Shader::compile_shader(Shader::Type::FRAG, frag);
+
+        if (vr.has_error()) {
+            stop();
+            return vr.error();
+        } else if (fr.has_error()) {
+            stop();
+            return vr.error();
+        }
+
+        glAttachShader(_program_id.value(), vr.value());
+        glAttachShader(_program_id.value(), fr.value());
+        glLinkProgram(_program_id.value());
+        glValidateProgram(_program_id.value());
+
+        glDeleteShader(vr.value());
+        glDeleteShader(fr.value());
+
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+            int32_t is_valid = GL_FALSE;
+            glGetProgramiv(_program_id.value(), GL_VALIDATE_STATUS, &is_valid);
+            Utily::Error error {};
+            if (!is_valid) {
+                GLint msg_length = 0;
+                glGetProgramiv(_program_id.value(), GL_INFO_LOG_LENGTH, &msg_length);
+
+                std::string error_msg;
+                error_msg.resize(msg_length);
+                glGetProgramInfoLog(_program_id.value(), msg_length, nullptr, error_msg.data());
+
+                Utily::Error error {
+                    std::format(
+                        "Unable to validate the program when constructing the shader. Where the error was: \n{}",
+                        error_msg)
+                };
+                stop();
+                return error;
+            }
+        }
+
+        return {};
     }
 
+    // cache it so we dont query the GPU over already bound stuff.
+    static Shader* last_bound = nullptr;
+
+    void Shader::bind() noexcept {
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+            std::cerr << "Trying to use invalid program";
+            assert(_program_id.has_value());
+        }
+        if (last_bound != this) {
+            glUseProgram(_program_id.value());
+            last_bound = this;
+        }
+    }
+    void Shader::unbind() noexcept {
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+            std::cerr << "Trying to use invalid program";
+            assert(_program_id.has_value());
+        }
+        if (last_bound != this && last_bound != nullptr) {
+            glUseProgram(0);
+            last_bound = nullptr;
+        }
+    }
     void Shader::stop() {
+        if (_program_id) {
+            _cached_uniforms.clear();
+            glDeleteProgram(*_program_id);
+            _program_id = std::nullopt;
+        }
     }
 
-    auto Shader::set_uniform(std::string_view uniform, int32_t value) -> Utily::Result<void, Utily::Error> {
-    }
-    auto Shader::set_uniform(std::string_view uniform, float value) -> Utily::Result<void, Utily::Error> {
-    }
-    auto Shader::set_uniform(std::string_view uniform, const glm::vec3& value) -> Utily::Result<void, Utily::Error> {
-    }
-    auto Shader::set_uniform(std::string_view uniform, const glm::mat4& value) -> Utily::Result<void, Utily::Error> {
+    // Assumes shader is bound already.
+    auto Shader::get_uniform(const std::string_view uniform) noexcept -> Utily::Result<Uniform, Utily::Error> {
+        size_t uniform_hash = std::hash<std::string_view> {}(uniform);
+        Uniform& ul = _cached_uniforms[uniform_hash];
+
+        if (ul.location == -1) {
+            ul.location = glGetUniformLocation(_program_id.value(), uniform.data());
+            if (ul.location == -1) {
+                return Utily::Error { std::format("Invalid Uniform key: {}", uniform) };
+            }
+        }
+        return ul;
     }
 
-    ~Shader::Shader() {
+    auto Shader::set_uniform(std::string_view uniform, int32_t value) noexcept -> Utily::Result<void, Utily::Error> {
+        bind();
+        auto maybe_uniform = get_uniform(uniform);
+        if (maybe_uniform.has_error()) {
+            return maybe_uniform.error();
+        }
+        glUniform1i(maybe_uniform.value().location, value);
+        return {};
+    }
+    auto Shader::set_uniform(std::string_view uniform, float value) noexcept -> Utily::Result<void, Utily::Error> {
+        bind();
+        auto maybe_uniform = get_uniform(uniform);
+        if (maybe_uniform.has_error()) {
+            return maybe_uniform.error();
+        }
+        glUniform1f(maybe_uniform.value().location, value);
+        return {};
+
+    }
+    auto Shader::set_uniform(std::string_view uniform, const glm::vec3& value) noexcept -> Utily::Result<void, Utily::Error> {
+        bind();
+        auto maybe_uniform = get_uniform(uniform);
+        if (maybe_uniform.has_error()) {
+            return maybe_uniform.error();
+        }
+        glUniform3f(maybe_uniform.value().location, value.x, value.y, value.z);
+        return {};
+
+    }
+    auto Shader::set_uniform(std::string_view uniform, const glm::mat4& value) noexcept -> Utily::Result<void, Utily::Error> {
+        bind();
+        auto maybe_uniform = get_uniform(uniform);
+        if (maybe_uniform.has_error()) {
+            return maybe_uniform.error();
+        }
+        glUniformMatrix4fv(maybe_uniform.value().location, 1, GL_FALSE, (const float*)&value[0][0]);
+        return {};
+    }
+
+    Shader::~Shader() {
+        stop();
     }
 
 } // namespace Renderer

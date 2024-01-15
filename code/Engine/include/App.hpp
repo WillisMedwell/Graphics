@@ -22,7 +22,7 @@ struct AppState {
 template <typename T, typename AppData>
 concept HasValidAppLogic = requires(T t, float dt, AppState& state, AppData& data, AppRenderer& renderer, AppInput& input) {
     {
-        t.init(data)
+        t.init(renderer, data)
     } -> std::same_as<void>;
     {
         t.update(dt, input, state, data)
@@ -54,7 +54,7 @@ private:
 public:
     auto init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> void {
         _context.init(app_name, width, height).on_error(Utily::ErrorHandler::print_then_quit);
-        _logic.init(_data);
+        _logic.init(_renderer, _data);
         _has_init = true;
     }
     auto stop() -> void {
