@@ -57,7 +57,7 @@ public:
             const auto& element = layout[i];
 #if defined(CONFIG_TARGET_NATIVE)
             glEnableVertexArrayAttrib(va.get_id().value(), i);
-            glVertexAttribPointer(i, element.count, element.type, element.normalised, stride, (const void*)offset);
+            glVertexAttribPointer(i, element.count, element.type, element.normalised, stride, reinterpret_cast<const void*>(offset));
 #elif defined(CONFIG_TARGET_WEB)
             glEnableVertexAttribArray(i);
             glVertexAttribPointer(i, element.count, element.type, element.normalised, stride, reinterpret_cast<const void*>(offset));

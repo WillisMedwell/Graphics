@@ -27,6 +27,7 @@ namespace Config {
     #include <emscripten/html5.h>
     #include <webgl/webgl1_ext.h>
     #include <webgl/webgl2_ext.h>
+    
     namespace Config {
         static constexpr TargetPlatform PLATFORM = TargetPlatform::web;
     }
