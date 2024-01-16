@@ -11,7 +11,7 @@ namespace Renderer {
     class OpenglContext
     {
     private:
-        static std::optional<GLFWwindow*> window;
+        std::optional<GLFWwindow*> _window;
         void validate_window();
 
     public:
@@ -20,6 +20,6 @@ namespace Renderer {
         void stop();
         [[nodiscard]] auto should_close() -> bool;
 
-        static uint_fast16_t window_width, window_height;
+        uint_fast16_t window_width, window_height;
     };
 }

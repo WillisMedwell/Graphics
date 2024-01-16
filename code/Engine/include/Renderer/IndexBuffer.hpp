@@ -4,10 +4,10 @@
 
 #include "Config.hpp"
 
-namespace Renderer
-{
+namespace Renderer {
     class IndexBuffer
-    {   
+    {
+    public:
         IndexBuffer() = default;
         IndexBuffer(const IndexBuffer&) = delete;
         IndexBuffer(IndexBuffer&& other) noexcept;
@@ -16,9 +16,10 @@ namespace Renderer
         void stop() noexcept;
 
         void bind() noexcept;
-        void unbind() noexcept; 
+        void unbind() noexcept;
+
     private:
         std::optional<uint32_t> _id = std::nullopt;
         size_t _count;
-    };   
+    };
 }

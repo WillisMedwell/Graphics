@@ -20,14 +20,20 @@ namespace Renderer {
         }
         return {};
     }
+
+    static VertexBuffer* last_bound = nullptr;
+
+
     void VertexBuffer::stop() noexcept {
         if (_id.value_or(INVALID_BUFFER_ID) != INVALID_BUFFER_ID) {
             glDeleteBuffers(1, &_id.value());
         }
         _id = std::nullopt;
+        
+        if(last_bound == this) {
+            last_bound = this;
+        }
     }
-
-    static VertexBuffer* last_bound = nullptr;
 
     void VertexBuffer::bind() noexcept {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {

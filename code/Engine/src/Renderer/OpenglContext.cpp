@@ -108,12 +108,10 @@ static void framebufferSizeCallback(GLFWwindow* window [[maybe_unused]], int wid
 }
 
 namespace Renderer {
-    inline std::optional<GLFWwindow*> OpenglContext::window = std::nullopt;
-    inline uint_fast16_t OpenglContext::window_width { 0 }, OpenglContext::window_height { 0 };
 
     void OpenglContext::validate_window() {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
-            if (!OpenglContext::window) {
+            if (!_window) {
                 Utily::ErrorHandler::print_then_quit(Utily::Error("Invalid window handle"));
             }
         }
@@ -123,19 +121,19 @@ namespace Renderer {
         if (glfwInit() == GLFW_FALSE) {
             return Utily::Error("GLFW3 failed to be initialised");
         }
-        if (window.has_value()) {
+        if (_window.has_value()) {
             return {};
         }
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
         glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-        window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
-        if (!window) {
+        _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
+        if (!_window) {
             return Utily::Error("GLFW3 failed to create a window");
         }
         window_width = width;
         window_height = height;
-        glfwMakeContextCurrent(*window);
+        glfwMakeContextCurrent(*_window);
 
 #ifdef CONFIG_TARGET_NATIVE
         glewExperimental = GL_TRUE;
@@ -150,7 +148,7 @@ namespace Renderer {
             }
         }
 #endif
-        glfwSetFramebufferSizeCallback(*window, framebufferSizeCallback);
+        glfwSetFramebufferSizeCallback(*_window, framebufferSizeCallback);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -165,12 +163,12 @@ namespace Renderer {
 
     auto OpenglContext::should_close() -> bool {
         validate_window();
-        return glfwWindowShouldClose(window.value());
+        return glfwWindowShouldClose(_window.value());
     }
 
     void OpenglContext::stop() {
-        if (window) {
-            glfwDestroyWindow(window.value());
+        if (_window) {
+            glfwDestroyWindow(_window.value());
         }
         glfwTerminate();
     }
@@ -178,7 +176,7 @@ namespace Renderer {
     void OpenglContext::poll_events() {
         validate_window();
         int width, height;
-        glfwGetWindowSize(*window, &width, &height);
+        glfwGetWindowSize(*_window, &width, &height);
         glfwPollEvents();
         window_width = static_cast<uint_fast16_t>(width);
         window_height = static_cast<uint_fast16_t>(height);

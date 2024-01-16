@@ -1,12 +1,9 @@
 #include "AppRenderer.hpp"
 
-Utily::StaticVector<Renderer::Shader, 20> AppRenderer::shaders;
-Utily::StaticVector<Renderer::VertexBuffer, 20> AppRenderer::vertex_buffers;
-Utily::StaticVector<Renderer::IndexBuffer, 20> AppRenderer::index_buffers;
-
+#include <format>
 
 auto AppRenderer::add_shader(std::string_view vertex, std::string_view fragment) noexcept -> Utily::Result<int, Utily::Error> {
-    int id = shaders.size();
+    auto id = shaders.size();
     shaders.emplace_back();
     auto result = shaders[id].init(vertex, fragment);
 
@@ -17,17 +14,38 @@ auto AppRenderer::add_shader(std::string_view vertex, std::string_view fragment)
             };
         }
     }
-    return id;
+    return static_cast<int>(id);
 }
 
-auto AppRenderer::get_shader(int shader_id) noexcept -> Renderer::Shader& {
+auto AppRenderer::add_vertex_buffer() -> Utily::Result<int, Utily::Error>{
+    auto id = vertex_buffers.size();
+
+    vertex_buffers.emplace_back();
+    auto result = vertex_buffers[id].init();
     if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
-        std::cerr << "Shader Id out of bounds.";
-        // not really meant to do this inside noexcept but idc.
-        assert(false);
+        if (result.has_error()) {
+            return Utily::Error { 
+                std::format("VertexBuffer {} failed. {}", id, result.error().what()) 
+            };
+        }
     }
-    return shaders[shader_id];
+    return static_cast<int>(id);
 }
+auto AppRenderer::add_index_buffer() -> Utily::Result<int, Utily::Error>{
+    auto id = index_buffers.size();
+
+    index_buffers.emplace_back();
+    auto result = index_buffers[id].init();
+    if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
+        if (result.has_error()) {
+            return Utily::Error { 
+                std::format("VertexBuffer {} failed. {}", id, result.error().what()) 
+            };
+        }
+    }
+    return static_cast<int>(id);
+}
+
 
 void AppRenderer::stop() noexcept
 {  

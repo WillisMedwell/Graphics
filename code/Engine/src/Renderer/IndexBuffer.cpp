@@ -22,15 +22,20 @@ namespace Renderer {
         }
         return {};
     }
+    
+    static IndexBuffer* last_bound = nullptr;
+    
     void IndexBuffer::stop() noexcept {
         if (_id.value_or(INVALID_BUFFER_ID) != INVALID_BUFFER_ID) {
             glDeleteBuffers(1, &_id.value());
         }
         _id = std::nullopt;
         _count = 0;
+        if(last_bound == this) {
+            last_bound = nullptr;
+        }
     }
 
-    static IndexBuffer* last_bound = nullptr;
 
     void IndexBuffer::bind() noexcept {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {

@@ -2,6 +2,8 @@
 
 #include "Config.hpp"
 
+#include <format>
+
 using namespace std::literals;
 
 namespace Renderer {
@@ -135,6 +137,9 @@ namespace Renderer {
             _cached_uniforms.clear();
             glDeleteProgram(*_program_id);
             _program_id = std::nullopt;
+        }
+        if (last_bound == this) {
+            last_bound = nullptr;
         }
     }
 

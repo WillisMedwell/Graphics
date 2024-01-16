@@ -60,6 +60,7 @@ public:
     auto stop() -> void {
         _renderer.stop();
         _logic.stop();
+        _context.stop();
     }
     auto update() -> void {
         float dt = std::chrono::duration<float> { std::chrono::high_resolution_clock::now() - _last_update }.count();
@@ -85,9 +86,9 @@ public:
 };
 
 template <typename Data, typename Logic>
-void autoRunApp() {
+void autoRunApp(std::string_view app_name = "Auto Running App") {
     App<Data, Logic> app;
-    app.init("AutoApp", 400, 400);
+    app.init(app_name, 400, 400);
     while (app.is_running()) {
         app.poll_events();
         app.update();
