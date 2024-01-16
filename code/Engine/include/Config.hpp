@@ -4,16 +4,18 @@
 
 namespace Config {
     enum class DebugInfo : uint_fast8_t {
-        NONE, 
-        MODERATE,   // Show shader errors, bad loads, etc. 
-        ALL         // Sllow opengl callbacks on native machines.
+        none, 
+        moderate,   // Show shader errors, bad loads, etc. 
+        all         // Sllow opengl callbacks on native machines.
     };
+    constexpr static DebugInfo DEBUG_LEVEL = DebugInfo::all;
 
-    constexpr static DebugInfo DEBUG_LEVEL = DebugInfo::ALL;
+    constexpr static bool SKIP_UNBINDING = false;
+
 
     enum class TargetPlatform : uint_fast8_t {
-        WEB,
-        NATIVE
+        web,
+        native
     };
 }
 
@@ -26,7 +28,7 @@ namespace Config {
     #include <webgl/webgl1_ext.h>
     #include <webgl/webgl2_ext.h>
     namespace Config {
-        static constexpr TargetPlatform PLATFORM = TargetPlatform::WEB;
+        static constexpr TargetPlatform PLATFORM = TargetPlatform::web;
     }
     #define CONFIG_TARGET_WEB
 #endif // defined(EMSCRIPTEN)
@@ -36,7 +38,7 @@ namespace Config {
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 namespace Config {
-    static constexpr TargetPlatform PLATFORM = TargetPlatform::NATIVE;
+    static constexpr TargetPlatform PLATFORM = TargetPlatform::native;
 }
 #define CONFIG_TARGET_NATIVE
 #endif // !defined(EMSCRIPTEN)

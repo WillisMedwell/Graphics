@@ -112,7 +112,7 @@ namespace Renderer {
     inline uint_fast16_t OpenglContext::window_width { 0 }, OpenglContext::window_height { 0 };
 
     void OpenglContext::validate_window() {
-        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (!OpenglContext::window) {
                 Utily::ErrorHandler::print_then_quit(Utily::Error("Invalid window handle"));
             }
@@ -143,7 +143,7 @@ namespace Renderer {
             return Utily::Error("Glew failed to be initialised");
         }
 
-        if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::ALL) {
+        if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::all) {
             if (GLEW_ARB_debug_output) {
                 glEnable(GL_DEBUG_OUTPUT);
                 glDebugMessageCallback(openglDebugCallback, nullptr);

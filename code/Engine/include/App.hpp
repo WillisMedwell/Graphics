@@ -58,6 +58,7 @@ public:
         _has_init = true;
     }
     auto stop() -> void {
+        _renderer.stop();
         _logic.stop();
     }
     auto update() -> void {

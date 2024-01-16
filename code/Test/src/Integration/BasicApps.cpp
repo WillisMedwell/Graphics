@@ -70,6 +70,7 @@ struct TriangleAppLogic {
             "     FragColor = vec4(1.0, 0.5, 0.2, 1.0); "
             " }"sv;
         renderer.add_shader(vert, frag);
+
         data.start_time = std::chrono::high_resolution_clock::now();
     }
     void update(float dt, AppInput& input, AppState& state, OneSecondAppData& data) {
@@ -82,7 +83,6 @@ struct TriangleAppLogic {
     }
 
     void draw(AppRenderer& renderer, OneSecondAppData& data) {
-        
     }
 
     void stop() {

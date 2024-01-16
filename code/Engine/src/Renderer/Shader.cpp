@@ -28,7 +28,7 @@ namespace Renderer {
         glShaderSource(shader, 1, &src, nullptr);
         glCompileShader(shader);
 
-        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             int32_t compile_status = GL_FALSE;
             glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
 
@@ -56,8 +56,8 @@ namespace Renderer {
 
         _program_id = glCreateProgram();
 
-        Utily::Result vr = Shader::compile_shader(Shader::Type::VERT, vert);
-        Utily::Result fr = Shader::compile_shader(Shader::Type::FRAG, frag);
+        Utily::Result vr = Shader::compile_shader(Shader::Type::vert, vert);
+        Utily::Result fr = Shader::compile_shader(Shader::Type::frag, frag);
 
         if (vr.has_error()) {
             stop();
@@ -75,7 +75,7 @@ namespace Renderer {
         glDeleteShader(vr.value());
         glDeleteShader(fr.value());
 
-        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             int32_t is_valid = GL_FALSE;
             glGetProgramiv(_program_id.value(), GL_VALIDATE_STATUS, &is_valid);
             Utily::Error error {};
@@ -104,9 +104,11 @@ namespace Renderer {
     static Shader* last_bound = nullptr;
 
     void Shader::bind() noexcept {
-        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
-            std::cerr << "Trying to use invalid program";
-            assert(_program_id.has_value());
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
+            if (!_program_id.has_value()) {
+                std::cerr << "Trying to use invalid program";
+                assert(_program_id.has_value());
+            }
         }
         if (last_bound != this) {
             glUseProgram(_program_id.value());
@@ -114,10 +116,15 @@ namespace Renderer {
         }
     }
     void Shader::unbind() noexcept {
-        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::NONE) {
-            std::cerr << "Trying to use invalid program";
-            assert(_program_id.has_value());
+        if constexpr (Config::SKIP_UNBINDING) {
+            return;
+        } else if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
+            if (!_program_id.has_value()) {
+                std::cerr << "Trying to use invalid program";
+                assert(_program_id.has_value());
+            }
         }
+
         if (last_bound != this && last_bound != nullptr) {
             glUseProgram(0);
             last_bound = nullptr;
@@ -162,7 +169,6 @@ namespace Renderer {
         }
         glUniform1f(maybe_uniform.value().location, value);
         return {};
-
     }
     auto Shader::set_uniform(std::string_view uniform, const glm::vec3& value) noexcept -> Utily::Result<void, Utily::Error> {
         bind();
@@ -172,7 +178,6 @@ namespace Renderer {
         }
         glUniform3f(maybe_uniform.value().location, value.x, value.y, value.z);
         return {};
-
     }
     auto Shader::set_uniform(std::string_view uniform, const glm::mat4& value) noexcept -> Utily::Result<void, Utily::Error> {
         bind();
