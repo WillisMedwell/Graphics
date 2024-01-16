@@ -2,7 +2,7 @@
 
 #include <format>
 
-auto AppRenderer::add_shader(std::string_view vertex, std::string_view fragment) noexcept -> Utily::Result<int, Utily::Error> {
+auto AppRenderer::add_shader(std::string_view vertex, std::string_view fragment) noexcept -> Utily::Result<AppRenderer::ShaderId, Utily::Error> {
     auto id = shaders.size();
     shaders.emplace_back();
     auto result = shaders[id].init(vertex, fragment);
@@ -14,10 +14,10 @@ auto AppRenderer::add_shader(std::string_view vertex, std::string_view fragment)
             };
         }
     }
-    return static_cast<int>(id);
+    return id;
 }
 
-auto AppRenderer::add_vertex_buffer() -> Utily::Result<int, Utily::Error>{
+auto AppRenderer::add_vertex_buffer() noexcept -> Utily::Result<AppRenderer::VertexBufferId, Utily::Error>{
     auto id = vertex_buffers.size();
 
     vertex_buffers.emplace_back();
@@ -29,9 +29,9 @@ auto AppRenderer::add_vertex_buffer() -> Utily::Result<int, Utily::Error>{
             };
         }
     }
-    return static_cast<int>(id);
+    return id;
 }
-auto AppRenderer::add_index_buffer() -> Utily::Result<int, Utily::Error>{
+auto AppRenderer::add_index_buffer() noexcept -> Utily::Result<AppRenderer::IndexBufferId, Utily::Error>{
     auto id = index_buffers.size();
 
     index_buffers.emplace_back();
@@ -43,7 +43,7 @@ auto AppRenderer::add_index_buffer() -> Utily::Result<int, Utily::Error>{
             };
         }
     }
-    return static_cast<int>(id);
+    return id;
 }
 
 

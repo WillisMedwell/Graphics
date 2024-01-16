@@ -11,7 +11,7 @@ namespace Config {
     constexpr static DebugInfo DEBUG_LEVEL = DebugInfo::all;
 
     constexpr static bool SKIP_UNBINDING = false;
-
+    constexpr static bool COLLECT_ANALYTICS = true;
 
     enum class TargetPlatform : uint_fast8_t {
         web,

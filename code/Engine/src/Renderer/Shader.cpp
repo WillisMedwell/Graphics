@@ -14,9 +14,9 @@ namespace Renderer {
     auto Shader::compile_shader(Type type, const std::string_view& source) -> Utily::Result<uint32_t, Utily::Error> {
         constexpr static auto shader_verison =
 #if defined(CONFIG_TARGET_NATIVE)
-            "#version 300 es \n"sv;
+            "#version 330 core \n"sv;
 #elif defined(CONFIG_TARGET_WEB)
-            "#version 300 core \n"sv;
+            "#version 300 es \n"sv;
 #else
             "#bad version \n"sv;
 #endif

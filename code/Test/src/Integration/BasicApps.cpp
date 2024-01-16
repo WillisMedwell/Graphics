@@ -1,14 +1,18 @@
 #include <gtest/gtest.h>
 
 #include <App.hpp>
+#include <iostream>
 
 using namespace std::literals;
+
 
 struct OneSecondAppData {
     std::chrono::steady_clock::time_point start_time;
 };
 struct OneSecondAppLogic {
     void init(AppRenderer& renderer, OneSecondAppData& data) {
+        data.start_time = std::chrono::high_resolution_clock::now();
+
         constexpr auto vert =
             "precision mediump float; "
             "layout(location = 0) in vec3 aPos;"
@@ -23,12 +27,12 @@ struct OneSecondAppLogic {
             " {"
             "     FragColor = vec4(1.0, 0.5, 0.2, 1.0); "
             " }"sv;
+        using VBL = Renderer::VertexBufferLayout<float, uint32_t, glm::vec3>;
 
         EXPECT_FALSE(renderer.add_shader(vert, frag).has_error());
         EXPECT_FALSE(renderer.add_vertex_buffer().has_error());
         EXPECT_FALSE(renderer.add_index_buffer().has_error());
-
-        data.start_time = std::chrono::high_resolution_clock::now();
+        EXPECT_FALSE(renderer.add_vertex_array(VBL {}, renderer.add_vertex_buffer().value()).has_error());
     }
     void update(float dt, AppInput& input, AppState& state, OneSecondAppData& data) {
 
@@ -55,9 +59,9 @@ struct TriangleAppData {
     constexpr static auto TRIANGLE_VERTICES = std::to_array({ -0.5f, -0.5f, 0.5f, -0.5f, 0.0f, 0.5f });
     constexpr static auto TRIANGLE_INDICES = std::to_array<uint32_t>({ 0, 1, 2 });
 };
-
 struct TriangleAppLogic {
     void init(AppRenderer& renderer, TriangleAppData& data) {
+        data.start_time = std::chrono::high_resolution_clock::now();
         constexpr auto vert =
             "precision mediump float; "
             "layout(location = 0) in vec3 aPos;"
@@ -72,10 +76,9 @@ struct TriangleAppLogic {
             " {"
             "     FragColor = vec4(1.0, 0.5, 0.2, 1.0); "
             " }"sv;
-        renderer.add_shader(vert, frag);
-        renderer.add_vertex_array(Renderer::VertexBufferLayout<float, uint32_t, glm::vec3>{});
+        using VBL = Renderer::VertexBufferLayout<float, uint32_t, glm::vec3>;
 
-        data.start_time = std::chrono::high_resolution_clock::now();
+        renderer.add_shader(vert, frag);
     }
     void update(float dt, AppInput& input, AppState& state, TriangleAppData& data) {
 

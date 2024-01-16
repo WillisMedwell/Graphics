@@ -21,6 +21,8 @@ namespace Renderer {
         void bind() noexcept;
         void unbind() noexcept;
 
+        auto get_id() const noexcept { return _id; }
+
     private:
         std::optional<uint32_t> _id;
     };

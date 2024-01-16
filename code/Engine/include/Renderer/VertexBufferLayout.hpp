@@ -22,6 +22,7 @@ namespace Renderer {
             uint32_t count;
             uint32_t type;
             uint32_t normalised;
+            uint32_t type_size;
         };
 
     private:
@@ -44,11 +45,11 @@ namespace Renderer {
         template <typename T>
         consteval static auto get_element() -> Element {
             if constexpr (std::same_as<T, float>) {
-                return Element { .count = 1, .type = GL_FLOAT, .normalised = GL_FALSE };
+                return Element { .count = 1, .type = GL_FLOAT, .normalised = GL_FALSE, .type_size = sizeof(float) };
             } else if constexpr (std::same_as<T, uint32_t>) {
-                return Element { .count = 1, .type = GL_UNSIGNED_INT, .normalised = GL_FALSE };
+                return Element { .count = 1, .type = GL_UNSIGNED_INT, .normalised = GL_FALSE, .type_size = sizeof(uint32_t) };
             } else if constexpr (isVec3f<T>) {
-                return Element { .count = 3, .type = GL_FLOAT, .normalised = GL_FALSE };
+                return Element { .count = 3, .type = GL_FLOAT, .normalised = GL_FALSE, .type_size = sizeof(float) * 3 };
             }
             return Element {};
         }
