@@ -9,7 +9,7 @@ namespace Renderer {
         : _id(std::exchange(other._id, std::nullopt)) { }
 
     auto VertexBuffer::init() noexcept -> Utily::Result<void, Utily::Error> {
-        if (_id.has_value()) {
+        if (_id) {
             return Utily::Error { "Trying to override in-use vertex buffer" };
         }
         _id = INVALID_BUFFER_ID;
