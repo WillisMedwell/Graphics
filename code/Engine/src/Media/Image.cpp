@@ -4,6 +4,9 @@
 #include <format>
 #include <lodepng.h>
 
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize.h>
+
 namespace Media {
     Image::Image(Image&& other)
         : _data(std::move(other._data))
@@ -85,10 +88,47 @@ namespace Media {
     void Image::add_fence(Renderer::Fence&& fence) noexcept {
         _fence.emplace(std::forward<Renderer::Fence>(fence));
     }
-    
+
     Image::~Image() {
         if (_fence) {
             _fence->wait_for_sync();
         }
+    }
+
+    void Image::resize(float scale) noexcept {
+        this->resize(
+            static_cast<uint32_t>(scale * static_cast<float>(_width)),
+            static_cast<uint32_t>(scale * static_cast<float>(_height)));
+    }
+    void Image::resize(uint32_t width, uint32_t height) noexcept {
+        int32_t channels = [&] {
+            if (_format == ColourFormat::rgb || _format == ColourFormat::s_rgb) {
+                return 3;
+            } else {
+                return 4;
+            }
+        }();
+
+        auto resized_image = std::vector<uint8_t>(width * height * channels);
+
+        stbir_resize_uint8(
+            _data.data(),
+            _width,
+            _height,
+            0,
+            resized_image.data(),
+            width,
+            height,
+            0,
+            channels);
+
+        if (_fence) {
+            _fence->wait_for_sync();
+            _fence = std::nullopt;
+        }
+
+        _data = std::exchange(resized_image, std::vector<uint8_t> {});
+        _width = width;
+        _height = height;
     }
 }

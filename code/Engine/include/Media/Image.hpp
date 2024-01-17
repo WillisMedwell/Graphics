@@ -31,6 +31,10 @@ namespace Media {
             -> Utily::Result<void, Utily::Error>;
 
         void stop() noexcept;
+        
+        void resize(float scale) noexcept;
+        void resize(uint32_t width, uint32_t height) noexcept;
+
 
         [[nodiscard]] auto data() noexcept -> std::optional<std::tuple<std::span<const uint8_t>, uint32_t, uint32_t, ColourFormat>>;
 

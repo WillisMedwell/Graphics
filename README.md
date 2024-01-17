@@ -6,6 +6,8 @@ An experimental project exploring a range of tools, techniques, and topics relat
 
 <details><summary><h2>Building</h2></summary>
 
+---
+
 ### Prerequisites
 
 To build this project for both native and web platforms, you need to install the following tools:

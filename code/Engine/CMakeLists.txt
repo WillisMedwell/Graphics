@@ -15,6 +15,7 @@ find_package(assimp CONFIG REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
 find_package(lodepng CONFIG REQUIRED) 
+find_package(Stb REQUIRED)
 
 include(FetchContent)
 
@@ -27,19 +28,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Utily)
 
 if(DEFINED EMSCRIPTEN)
-    target_include_directories(Engine PUBLIC 
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-    )
     target_link_libraries(Engine PUBLIC 
         glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 
     )
-    target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${Stb_INCLUDE_DIR})
 else()
-    target_include_directories(Engine PUBLIC 
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-    )
     find_package(OpenGL REQUIRED) 
     find_package(GLFW3 CONFIG REQUIRED)
     find_package(GLEW REQUIRED)
@@ -47,7 +40,7 @@ else()
         glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 
         OpenGL::GL GLEW::GLEW glfw
     )
-    target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR})
+    target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${Stb_INCLUDE_DIR})
 endif()
 
 if(NOT MSVC)  

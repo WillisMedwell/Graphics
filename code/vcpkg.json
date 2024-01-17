@@ -6,6 +6,7 @@
         "assimp",
         "bullet3",
         "lodepng",
+        "stb",
         {
             "name": "glfw3",
             "platform": "!emscripten"

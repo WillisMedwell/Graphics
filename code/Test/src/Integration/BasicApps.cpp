@@ -78,7 +78,7 @@ struct TriangleAppLogic {
             " }"sv;
         using VBL = Renderer::VertexBufferLayout<float, uint32_t, glm::vec3>;
 
-        renderer.add_shader(vert, frag);
+        auto r = renderer.add_shader(vert, frag);
     }
     void update(float dt, AppInput& input, AppState& state, TriangleAppData& data) {
 
