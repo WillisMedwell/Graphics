@@ -4,9 +4,9 @@ An experimental project exploring a range of tools, techniques, and topics relat
 - **Demos** provides the logic of the app. 
 - **Test** includes unit and integration tests - both native and browser based.
 
-## Building
+<details><summary><h2>Building</h2></summary>
 
-<details><summary><h3>Prerequisite</h3></summary>
+### Prerequisites
 
 To build this project for both native and web platforms, you need to install the following tools:
 
@@ -35,17 +35,17 @@ Make sure all these tools are correctly installed and configured in your system'
 
 ---
 
-</details>
-
-<details><summary><h3>Windows</h3></summary>
+### Windows
 
 1. You need to change the variables in the `build-native.bat` and `build-web.bat` scripts. 
     - These variables can sometimes not be set properly by Emscripten and Vcpkg so this is the easiest solution.
     - *(Alternatively you could add them to the system's path) then remove them.*
 2. Run build-native.bat
 3. Run build-web.bat
-</details>
 
+---
+
+</details>
 <details><summary><h2>Libraries & Licenses</h2></summary>
 
 - OpenGL Mathematics (GLM). *Which is licensed under The Happy Bunny License and the MIT License. <br>See [LICENSE_GLM](LICENSES/LICENSE_GLM) for more details.*
