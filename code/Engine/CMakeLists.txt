@@ -13,6 +13,8 @@ find_package(glm CONFIG REQUIRED)
 find_package(entt CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
+find_package(Bullet CONFIG REQUIRED)
+find_package(lodepng CONFIG REQUIRED) 
 
 include(FetchContent)
 
@@ -30,7 +32,7 @@ if(DEFINED EMSCRIPTEN)
         $<INSTALL_INTERFACE:include>
     )
     target_link_libraries(Engine PUBLIC 
-        glm::glm assimp::assimp EnTT::EnTT Utily::Utily ${BULLET_LIBRARIES}
+        glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 
     )
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 else()
@@ -42,7 +44,7 @@ else()
     find_package(GLFW3 CONFIG REQUIRED)
     find_package(GLEW REQUIRED)
     target_link_libraries(Engine PUBLIC 
-        glm::glm assimp::assimp EnTT::EnTT Utily::Utily ${BULLET_LIBRARIES} 
+        glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 
         OpenGL::GL GLEW::GLEW glfw
     )
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR})

@@ -5,6 +5,7 @@
         "entt",
         "assimp",
         "bullet3",
+        "lodepng",
         {
             "name": "glfw3",
             "platform": "!emscripten"

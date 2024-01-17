@@ -5,8 +5,6 @@
 #include <iostream>
 #include <tuple>
 
-constexpr static uint32_t NUM_SAMPLES = 4;
-
 namespace Renderer {
     struct TextureUnit {
         Texture* texture = nullptr;
@@ -50,6 +48,44 @@ namespace Renderer {
         }
         return {};
     }
+    auto Texture::upload_image(
+        Media::Image& image,
+        Filter filter,
+        bool offload_image_on_success) noexcept
+        -> Utily::Result<void, Utily::Error> {
+
+        if (!_id) {
+            if (auto ir = init(); ir.has_error()) {
+                return ir.error();
+            }
+        }
+
+        auto ir = image.data();
+        if (!ir.has_value()) {
+            return Utily::Error { "Image has no data." };
+        }
+        auto [img, width, height, colour_format] = ir.value();
+
+        if (auto br = bind(); br.has_error()) {
+            return br.error();
+        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (int32_t)filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (int32_t)filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_SRGB8_ALPHA8, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));
+        
+        if(offload_image_on_success) {
+            glFinish();
+            image.stop();
+        } else {
+            auto fence = Renderer::Fence{};
+            fence.init();
+            image.add_fence(std::move(fence));
+        }
+
+        return {};
+    }
 
     auto Texture::bind(bool locked) noexcept -> Utily::Result<uint32_t, Utily::Error> {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
@@ -76,33 +112,11 @@ namespace Renderer {
         texture_unit->immutable = locked;
 
         glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(index));
-        glBindTexture((GLenum)_bind_type, _id.value_or(INVALID_TEXTURE_ID));
+        glBindTexture(GL_TEXTURE_2D, _id.value_or(INVALID_TEXTURE_ID));
         _texture_unit_index = static_cast<uint32_t>(index);
 
         return static_cast<uint32_t>(index);
     }
-
-    void Texture::setup_for_framebuffer(uint32_t width, uint32_t height, BindType sample_type) noexcept {
-        if (!_id) {
-            init();
-        }
-        _bind_type = sample_type;
-        bind();
-
-        switch (sample_type) {
-        case BindType::basic: {
-            glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)ColourCorrection::uncorrected, width, height, 0, GL_RGB, (GLenum)ColourCorrection::uncorrected, nullptr);
-        } break;
-        case BindType::multisample: {
-            //glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, NUM_SAMPLES, (GLenum)ColourCorrection::uncorrected, width, height, true);
-            // /glGenRenderbuffersEXT(1, )
-            //glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, 4, GL_RGBA8, 256, 256);
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA8, 256, 256);
-        } break;
-        }
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *_id, 0);        
-    }
-
     void Texture::unbind() noexcept {
         if (!texture_units.size()) {
             return;
