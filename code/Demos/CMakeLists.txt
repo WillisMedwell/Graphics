@@ -8,15 +8,8 @@ file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 
 add_executable(Demos ${DEMOS_SOURCES} ${DEMOS_HEADERS})
 
-if(DEFINED EMSCRIPTEN)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")   
-    
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g -s DEMANGLE_SUPPORT=1 -s FORCE_FILESYSTEM=1 -s ASSERTIONS=1 -s SAFE_HEAP=1 -s STACK_OVERFLOW_CHECK=2 -s NO_DISABLE_EXCEPTION_CATCHING")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -Os")
-    
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_WEBGL2=1 -s MAX_WEBGL_VERSION=3 -s USE_GLFW=3 -s FULL_ES3=1 -s FULL_ES2=1") 
+if(DEFINED EMSCRIPTEN)        
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' -s EXPORT_NAME=\"'WasmModuleDemos'\"") 
-    
     # Move index.html.
     file(COPY ${CMAKE_SOURCE_DIR}/index.html DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     
@@ -30,8 +23,10 @@ if(DEFINED EMSCRIPTEN)
     endforeach()
     message(STATUS "PRELOAD FILES: \"${PRELOAD_FILES}\"")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PRELOAD_FILES}")
+    target_compile_options(Demos PRIVATE -msimd128 -mrelaxed-simd -msse -msse2 -mavx)
 else()
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    target_compile_options(Demos PRIVATE -march=native)
 endif()
 
 target_link_libraries(Demos PUBLIC Engine)

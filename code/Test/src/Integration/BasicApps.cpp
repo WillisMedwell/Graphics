@@ -5,6 +5,7 @@
 
 using namespace std::literals;
 
+#include "AppAnalytics.hpp"
 
 struct OneSecondAppData {
     std::chrono::steady_clock::time_point start_time;

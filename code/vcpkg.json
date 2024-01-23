@@ -8,11 +8,15 @@
         "lodepng",
         "stb",
         {
-            "name": "glfw3",
+            "name": "opengl",
             "platform": "!emscripten"
         },
         {
-            "name": "opengl",
+            "name": "openal-soft",
+            "platform": "!emscripten"
+        },
+        {
+            "name": "glfw3",
             "platform": "!emscripten"
         },
         {
@@ -20,4 +24,5 @@
             "platform": "!emscripten"
         }
     ]
+    
 }

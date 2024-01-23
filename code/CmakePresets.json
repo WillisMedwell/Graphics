@@ -1,0 +1,80 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 11,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "gcc-ninja-release",
+            "description": "Build with GCC and Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/gcc-ninja-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "CC": "gcc",
+                "CXX": "g++"
+            }
+        },
+        {
+            "name": "clang-ninja-release",
+            "description": "Build with Clang and Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/clang-ninja-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "CC": "clang",
+                "CXX": "clang++"
+            }
+        },
+        {
+            "name": "emscripten-ninja-release",
+            "description": "Build with Emscripten SDK",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/emscripten-ninja-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "CC": "emcc",
+                "CXX": "em++"
+            }
+        },
+        {
+            "name": "emscripten-ninja-debug",
+            "description": "Build with Emscripten SDK",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/emscripten-ninja-debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "environment": {
+                "CC": "emcc",
+                "CXX": "em++"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "gcc-ninja-release",
+            "configurePreset": "gcc-ninja-release"
+        },
+        {
+            "name": "clang-ninja-release",
+            "configurePreset": "clang-ninja"
+        },
+        {
+            "name": "emscripten-ninja-release",
+            "configurePreset": "emscripten-ninja"
+        },
+        {
+            "name": "emscripten-ninja-debug",
+            "configurePreset": "emscripten-ninja"
+        }
+    ]
+}

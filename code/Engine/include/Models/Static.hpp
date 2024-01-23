@@ -1,25 +1,19 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <array>
+#include "Models/Types.hpp"
+#include "Utily/Utily.hpp"
 
-#include <glm/vec3.hpp>
-#include <glm/vec2.hpp>
+namespace Models {
 
-namespace Models::Static {
-    struct Vertex {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec2 uv_coord;
+    struct Static {
+        std::array<Vec3, 2> axis_align_bounding_box;
+        std::unique_ptr<std::byte[]> data;
+        std::span<Vertex> vertices;
+        std::span<uint32_t> indices;
     };
 
-    static_assert(sizeof(Models::Static::Vertex) == sizeof(std::array<float,8>));
-
-    struct Model {
-        std::string name;
-        std::vector<Vertex> vertex_data;
-        std::vector<uint32_t> index_data;
-    };
-
-} // namespace Models::Static
+    auto decode_as_static_model(
+        std::span<std::byte> file_data,
+         Utily::StaticVector<char, 16> file_extension)
+        -> Utily::Result<Static, Utily::Error>;
+}

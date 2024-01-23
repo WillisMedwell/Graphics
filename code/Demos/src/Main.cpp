@@ -1,6 +1,6 @@
 #include "App.hpp"
 #include "Config.hpp"
-#include "Models/Staging.hpp"
+#include "Models/Models.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -9,24 +9,24 @@
 
 #include <Utily/Utily.hpp>
 
-auto print_then_quit = [](auto& error) {
-    std::cerr
-        << error.what()
-        << std::endl;
-    exit(1);
-};
+// auto print_then_quit = [](auto& error) {
+//     std::cerr
+//         << error.what()
+//         << std::endl;
+//     exit(1);
+// };
 
-auto print_num_faces = [](Models::Staging::Model& model) {
-    std::println("Triangle Count: {}", model.index_data.size() / 3);
-};
+// auto print_num_faces = [](Model::Staging::Model& model) {
+//     std::println("Triangle Count: {}", model.index_data.size() / 3);
+// };
 
-void timeLoadModel(const std::string& file_path) {
-    auto start = std::chrono::high_resolution_clock::now();
-    Models::Staging::loadModel(file_path).on_error(print_then_quit).on_value(print_num_faces);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    std::cout << "Loading " << file_path << " took " << duration.count() << " milliseconds." << std::endl;
-}
+// void timeLoadModel(const std::string& file_path) {
+//     auto start = std::chrono::high_resolution_clock::now();
+//     Models::Staging::loadModel(file_path).on_error(print_then_quit).on_value(print_num_faces);
+//     auto end = std::chrono::high_resolution_clock::now();
+//     std::chrono::duration<double, std::milli> duration = end - start;
+//     std::cout << "Loading " << file_path << " took " << duration.count() << " milliseconds." << std::endl;
+// }
 
 struct Data {
     Cameras::StationaryPerspective camera {

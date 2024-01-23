@@ -27,22 +27,28 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Utily)
 
+if(NOT MSVC)  
+    target_compile_options(Engine PRIVATE -fexperimental-library -Wall -Wextra -Wpedantic)
+endif()
+
 if(DEFINED EMSCRIPTEN)
     target_link_libraries(Engine PUBLIC 
         glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 
     )
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${Stb_INCLUDE_DIR})
+    target_compile_options(Engine PUBLIC 
+        "$<$<CONFIG:Debug>:-O0;-g;-sDEMANGLE_SUPPORT=1;-sFORCE_FILESYSTEM=1;-sASSERTIONS=1;-sSAFE_HEAP=1;-sSTACK_OVERFLOW_CHECK=2;-sNO_DISABLE_EXCEPTION_CATCHING;-Wno-unused-command-line-argument>"
+        "$<$<CONFIG:Release>:-Oz;-sGL_FFP_ONLY;-msimd128;-Wno-unused-command-line-argument>"
+    )
+    target_link_options(Engine PUBLIC -sUSE_WEBGL2=1 -sUSE_GLFW=3 -sFULL_ES3=1 -sFULL_ES2=1 -Wno-unused-command-line-argument)
 else()
     find_package(OpenGL REQUIRED) 
+    find_package(OpenAL CONFIG REQUIRED)
     find_package(GLFW3 CONFIG REQUIRED)
     find_package(GLEW REQUIRED)
     target_link_libraries(Engine PUBLIC 
         glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 
-        OpenGL::GL GLEW::GLEW glfw
+        OpenGL::GL OpenAL::OpenAL GLEW::GLEW glfw 
     )
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OPENGL_INCLUDE_DIR} ${Stb_INCLUDE_DIR})
-endif()
-
-if(NOT MSVC)  
-    target_compile_options(Engine PRIVATE -fexperimental-library -Wall -Wextra -Wpedantic)
 endif()
