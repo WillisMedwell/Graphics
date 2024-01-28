@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Model/Model.hpp"
 #include "Utily/Utily.hpp"
 #include <gtest/gtest.h>
@@ -22,5 +24,5 @@ TEST(Unit, Model_static) {
         { '.', 'o', 'b', 'j' });
 
     EXPECT_FALSE(maybe_cube.has_error());
-    //EXPECT_EQ(maybe_cube.value().vertices.size(), 36);
+
 }

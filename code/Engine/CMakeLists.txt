@@ -38,7 +38,7 @@ if(DEFINED EMSCRIPTEN)
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${Stb_INCLUDE_DIR})
     target_compile_options(Engine PUBLIC 
         "$<$<CONFIG:Debug>:-O0;-g3;-sDEMANGLE_SUPPORT=1;-sFORCE_FILESYSTEM=1;-sASSERTIONS=1;-sSAFE_HEAP=1;-sSTACK_OVERFLOW_CHECK=2;-sNO_DISABLE_EXCEPTION_CATCHING;-Wno-unused-command-line-argument>"
-        "$<$<CONFIG:Release>:-Oz;-sGL_FFP_ONLY;-msimd128;-Wno-unused-command-line-argument>"
+        "$<$<CONFIG:Release>:-Oz;-sGL_FFP_ONLY;-msimd128;-mrelaxed-simd;-msse;-msse2;-mavx;-Wno-unused-command-line-argument>"
     )
     target_link_options(Engine PUBLIC -sUSE_WEBGL2=1 -sUSE_GLFW=3 -sFULL_ES3=1 -sFULL_ES2=1 -Wno-unused-command-line-argument -sALLOW_MEMORY_GROWTH)
 else()

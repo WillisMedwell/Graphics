@@ -21,7 +21,7 @@ namespace Model {
         constexpr auto assimp_process_flags =
             aiProcess_CalcTangentSpace
             | aiProcess_Triangulate
-            | aiProcess_JoinIdenticalVertices // maybe bad.
+            | aiProcess_JoinIdenticalVertices
             | aiProcess_SortByPType
             | aiProcess_OptimizeGraph
             | aiProcess_OptimizeMeshes

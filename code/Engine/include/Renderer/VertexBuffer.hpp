@@ -28,12 +28,17 @@ namespace Renderer {
         template <typename Range>
             requires std::ranges::range<Range>
             && std::contiguous_iterator<std::ranges::iterator_t<Range>>
-            && std::same_as<std::ranges::range_value_t<Range>, float>
             && std::ranges::sized_range<Range>
         void load_vertices(const Range& vertices) noexcept {
             this->bind();
-            size_t size_in_bytes = vertices.size() * sizeof(float);
+            using Underlying = std::ranges::range_value_t<Range>;
+            size_t size_in_bytes = vertices.size() * sizeof(Underlying);
+
+#if defined(CONFIG_TARGET_NATIVE)
             glBufferData(GL_ARRAY_BUFFER, size_in_bytes, &(*vertices.begin()), GL_DYNAMIC_DRAW);
+#elif defined(CONFIG_TARGET_WEB)
+            glBufferData(GL_ARRAY_BUFFER, size_in_bytes, &(*vertices.begin()), GL_STATIC_DRAW);
+#endif
         }
 
     private:

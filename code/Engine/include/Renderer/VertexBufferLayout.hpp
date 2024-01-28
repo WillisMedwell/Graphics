@@ -14,8 +14,14 @@ namespace Renderer {
         { t.z } -> std::same_as<float&>;
     };
 
+    template <typename T>
+    concept isVec2f = requires(T t) {
+        { t.x } -> std::same_as<float&>;
+        { t.y } -> std::same_as<float&>;
+    };
+
     template <typename... Args>
-        requires((std::same_as<float, Args> || std::same_as<uint32_t, Args> || isVec3f<Args>) && ...)
+        requires((std::same_as<float, Args> || std::same_as<uint32_t, Args> || isVec3f<Args> || isVec2f<Args>) && ...)
     class VertexBufferLayout
     {
         struct Element {
@@ -38,6 +44,8 @@ namespace Renderer {
                 return sizeof(uint32_t);
             } else if constexpr (isVec3f<T>) {
                 return sizeof(float) * 3;
+            } else if constexpr (isVec2f<T>) {
+                return sizeof(float) * 2;
             }
             return 0;
         }
@@ -50,6 +58,8 @@ namespace Renderer {
                 return Element { .count = 1, .type = GL_UNSIGNED_INT, .normalised = GL_FALSE, .type_size = sizeof(uint32_t) };
             } else if constexpr (isVec3f<T>) {
                 return Element { .count = 3, .type = GL_FLOAT, .normalised = GL_FALSE, .type_size = sizeof(float) * 3 };
+            } else if constexpr (isVec2f<T>) {
+                return Element { .count = 2, .type = GL_FLOAT, .normalised = GL_FALSE, .type_size = sizeof(float) * 2 };
             }
             return Element {};
         }
@@ -60,7 +70,7 @@ namespace Renderer {
         }
 
         consteval auto get_layout() {
-            return std::to_array<Element>({ (get_element<Args>(), ...) });
+            return std::to_array<Element>({ (get_element<Args>()) ... });
         }
     };
 }

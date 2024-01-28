@@ -23,15 +23,15 @@ struct AppState {
 };
 
 template <typename T, typename AppData>
-concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, AppInput& input) {
+concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, AppInput& input, entt::registry& ecs) {
     {
-        t.init(renderer, data)
+        t.init(renderer, ecs, data)
     } -> std::same_as<void>;
     {
-        t.update(dt, input, state, data)
+        t.update(dt, input, state, ecs, data)
     } -> std::same_as<void>;
     {
-        t.draw(renderer, data)
+        t.draw(renderer, ecs, data)
     } -> std::same_as<void>;
     {
         t.stop()
@@ -46,7 +46,7 @@ private:
     AppState _state;
     AppInput _input;
     AppRenderer _renderer;
-
+    entt::registry _ecs;
     AppData _data;
     AppLogic _logic;
 
@@ -57,7 +57,8 @@ private:
 public:
     auto init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> void {
         _context.init(app_name, width, height).on_error(Utily::ErrorHandler::print_then_quit);
-        _logic.init(_renderer, _data);
+        _ecs = entt::registry {};
+        _logic.init(_renderer, _ecs, _data);
         _has_init = true;
     }
     auto stop() -> void {
@@ -67,13 +68,13 @@ public:
     }
     auto update() -> void {
         double dt = std::chrono::duration<double> { std::chrono::high_resolution_clock::now() - _last_update }.count();
-        _logic.update(dt, _input, _state, _data);
+        _logic.update(dt, _input, _state, _ecs, _data);
         _last_update = std::chrono::high_resolution_clock::now();
     }
     auto render() -> void {
         _renderer.window_width = _context.window_width;
         _renderer.window_height = _context.window_height;
-        _logic.draw(_renderer, _data);
+        _logic.draw(_renderer, _ecs, _data);
         _context.swap_buffers();
     }
 

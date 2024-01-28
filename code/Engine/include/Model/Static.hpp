@@ -16,4 +16,5 @@ namespace Model {
         std::span<uint8_t> file_data,
          Utily::StaticVector<char, 16> file_extension)
         -> Utily::Result<Static, Utily::Error>;
+
 }

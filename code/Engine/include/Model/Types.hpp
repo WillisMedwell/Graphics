@@ -5,6 +5,7 @@
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Renderer/VertexBufferLayout.hpp"
 
 namespace Model {
     using Vec2 = glm::vec2;
@@ -25,6 +26,8 @@ namespace Model {
             return stream;
         }
     };
+
+    using StaticVertexLayout = Renderer::VertexBufferLayout<glm::vec3, glm::vec3, glm::vec2>;
 
     using Index = uint32_t;
 

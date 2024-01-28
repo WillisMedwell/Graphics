@@ -1,7 +1,7 @@
 #pragma once
 
-namespace Cameras {
-    class Fps {
+#include <glm/glm.hpp>
 
-    };
+namespace Cameras {
+
 }
