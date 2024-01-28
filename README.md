@@ -1,8 +1,10 @@
 # A Portable Graphics Engine 
 An experimental project exploring a range of tools, techniques, and topics related to graphics (OpenGL). Using Emscripten, the project is also portable to the web. The repo is broken into several projects:
 - **Engine** is the core rendering and window management.
-- **Demos** provides the logic of the app. 
-- **Test** includes unit and integration tests - both native and browser based.
+- **Demos** is a test project for whatever feature I'm working on. 
+- **Test** is composed of unit and integration tests. 
+
+Check out the online tests here...
 
 <details><summary><h2>Building</h2></summary>
 
