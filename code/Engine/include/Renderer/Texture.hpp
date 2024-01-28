@@ -20,7 +20,7 @@ namespace Renderer {
         Texture(const Texture&) = delete;
         Texture(Texture&&);
 
-        auto init() noexcept -> Utily::Result<void, Utily::Error>;
+        [[nodiscard]] auto init() noexcept -> Utily::Result<void, Utily::Error>;
         auto upload_image(Media::Image& image, Filter filter = Filter::smooth, bool offload_image_on_success = false) noexcept -> Utily::Result<void, Utily::Error>;
 
         // Once texture unit is aquired, it cannot be taken away unless unbinded() or just bind(false).

@@ -3,6 +3,7 @@
 #include <Utily/Utily.hpp>
 
 #include "Config.hpp"
+#include <glm/glm.hpp>
 #include <optional>
 
 namespace Renderer {
@@ -25,5 +26,17 @@ namespace Renderer {
         std::optional<uint32_t> _id = std::nullopt;
         std::optional<uint32_t> _colour_attachment_index = std::nullopt;
         uint32_t _width { 0 }, _height { 0 };
+    };
+
+    class ScreenFrameBuffer
+    {
+    public:
+        static void clear(glm::vec4 colour = { 0, 0, 0, 1.0f }) noexcept;
+        static void bind() noexcept;
+        static void resize(uint32_t screen_width, uint32_t screen_height) noexcept;
+
+    private:
+        constexpr static uint32_t SCREEN_ID = 0;
+        static uint32_t width, height;
     };
 }

@@ -1,4 +1,4 @@
-#include "Models/Static.hpp"
+#include "Model/Static.hpp"
 
 #include <algorithm>
 #include <array>
@@ -15,13 +15,13 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
-namespace Models {
-    auto decode_as_static_model(std::span<std::byte> file_data, Utily::StaticVector<char, 16> file_extension)
+namespace Model {
+    auto decode_as_static_model(std::span<uint8_t> file_data, Utily::StaticVector<char, 16> file_extension)
         -> Utily::Result<Static, Utily::Error> {
         constexpr auto assimp_process_flags =
             aiProcess_CalcTangentSpace
             | aiProcess_Triangulate
-            | aiProcess_JoinIdenticalVertices
+            | aiProcess_JoinIdenticalVertices // maybe bad.
             | aiProcess_SortByPType
             | aiProcess_OptimizeGraph
             | aiProcess_OptimizeMeshes
@@ -59,32 +59,35 @@ namespace Models {
             if (!assimp_mesh->HasFaces() || !assimp_mesh->HasNormals() || !assimp_mesh->HasPositions()) {
                 return Utily::Error("There was either no: faces || normals || positions");
             }
-            
+
             auto faces = std::span { assimp_mesh->mFaces, assimp_mesh->mNumFaces };
             auto positions = std::span { assimp_mesh->mVertices, assimp_mesh->mNumVertices };
             auto normals = std::span { assimp_mesh->mNormals, assimp_mesh->mNumVertices };
             auto uvs = std::span { assimp_mesh->mTextureCoords[0], assimp_mesh->mNumVertices };
-            
+
             auto get_formatted_aabb = [&] {
                 return std::array<Vec3, 2> {
                     Vec3 { static_cast<float>(assimp_mesh->mAABB.mMin.x), static_cast<float>(assimp_mesh->mAABB.mMin.y), static_cast<float>(assimp_mesh->mAABB.mMin.z) },
                     Vec3 { static_cast<float>(assimp_mesh->mAABB.mMax.x), static_cast<float>(assimp_mesh->mAABB.mMax.y), static_cast<float>(assimp_mesh->mAABB.mMax.z) },
                 };
             };
-            auto to_vert = [](auto& p, auto& n, auto& u) -> Vertex {
+            auto to_span = [](const aiFace& face) -> std::span<uint32_t> {
+                return { face.mIndices, face.mNumIndices };
+            };
+
+            auto to_vert = [](auto&& pnu) -> Vertex {
+                auto& [p, n, u] = pnu;
                 return {
                     .position = { p.x, p.y, p.z },
                     .normal = { n.x, n.y, n.z },
                     .uv_coord = { u.x, u.y }
                 };
             };
-            auto to_span = [](const aiFace& face) -> std::span<uint32_t> {
-                return { face.mIndices, face.mNumIndices };
-            };
-            auto vertices_view = std::views::zip_transform(to_vert, positions, normals, uvs);
-            auto indices_view = faces | std::views::transform(to_span) | std::views::join;
+            auto vertices_view = std::views::zip(positions, normals, uvs) | std::views::transform(to_vert);
 
-            auto [ptr, vert, ind] = Utily::InlineArrays::alloc_copy(vertices_view, std::move(indices_view));
+            auto indices_view = faces | std::views::transform(to_span) | std::views::join;
+            auto [ptr, vert, ind] = Utily::InlineArrays::alloc_copy(std::move(vertices_view), std::move(indices_view));
+
             loaded_model.axis_align_bounding_box = get_formatted_aabb();
             loaded_model.data = std::move(ptr);
             loaded_model.vertices = vert;

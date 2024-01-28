@@ -15,7 +15,7 @@ namespace Renderer {
 
     static Utily::StaticVector<ColourAttachment, 64> colour_attachments;
 
-    auto getUsableColourAttachment() -> Utily::Result<std::tuple<ColourAttachment*, uint32_t>, Utily::Error> {
+    auto get_usable_colour_attachment() -> Utily::Result<std::tuple<ColourAttachment*, uint32_t>, Utily::Error> {
         if (!colour_attachments.size()) {
             int32_t max_colour_attachments = 0;
             glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &max_colour_attachments);
@@ -55,17 +55,17 @@ namespace Renderer {
         }
 
         if (!_colour_attachment_index) {
-            auto result = getUsableColourAttachment();
+            auto result = get_usable_colour_attachment();
             if (result.has_error()) {
                 return result.error();
             }
             _colour_attachment_index = std::get<uint32_t>(result.value());
         }
 
-        auto& [colour_rb, in_use] = colour_attachments[*_colour_attachment_index]; 
+        auto& [colour_rb, in_use] = colour_attachments[*_colour_attachment_index];
 
         bind();
-        if(!colour_rb) {
+        if (!colour_rb) {
             colour_rb = 0;
             glGenRenderbuffers(1, &colour_rb.value());
         }
@@ -126,4 +126,28 @@ namespace Renderer {
             last_bound = nullptr;
         }
     }
+
+    uint32_t ScreenFrameBuffer::width = 0;
+    uint32_t ScreenFrameBuffer::height = 0;
+
+    void ScreenFrameBuffer::clear(glm::vec4 colour) noexcept {
+        ScreenFrameBuffer::bind();
+        glClearColor(colour.x, colour.y, colour.z, colour.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+    void ScreenFrameBuffer::bind() noexcept {
+        if (last_bound != nullptr) {
+            glBindBuffer(GL_FRAMEBUFFER, 0);
+            last_bound = nullptr;
+        }
+    }
+    void ScreenFrameBuffer::resize(uint32_t screen_width, uint32_t screen_height) noexcept {
+        if (screen_width != ScreenFrameBuffer::width || screen_height != ScreenFrameBuffer::height) {
+            ScreenFrameBuffer::bind();
+            glViewport(0, 0, screen_width, screen_height);
+            ScreenFrameBuffer::width = screen_width;
+            ScreenFrameBuffer::height = screen_height;
+        }
+    }
+
 }

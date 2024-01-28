@@ -15,7 +15,7 @@ namespace Renderer {
         VertexArray(const VertexArray&) = delete;
         VertexArray(VertexArray&& other);
 
-        auto init() noexcept -> Utily::Result<void, Utily::Error>;
+        [[nodiscard]] auto init() noexcept -> Utily::Result<void, Utily::Error>;
         void stop() noexcept;
 
         void bind() noexcept;

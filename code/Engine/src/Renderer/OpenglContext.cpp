@@ -116,8 +116,34 @@ namespace Renderer {
             }
         }
     }
+#if defined(CONFIG_TARGET_WEB)
+    static std::optional<GLFWwindow*> g_window = std::nullopt;
+#endif
 
     auto OpenglContext::init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> Utily::Result<void, Utily::Error> {
+#if defined(CONFIG_TARGET_NATIVE)
+        if (glfwInit() == GLFW_FALSE) {
+            return Utily::Error("GLFW3 failed to be initialised");
+        }
+
+        if (_window.has_value()) {
+            return {};
+        }
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
+        _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
+        if (!_window) {
+            return Utily::Error("GLFW3 failed to create a window");
+        }
+        window_width = width;
+        window_height = height;
+        glfwMakeContextCurrent(*_window);
+#elif defined(CONFIG_TARGET_WEB)
+        if (g_window) {
+            _window = g_window;
+            return {};
+        }
         if (glfwInit() == GLFW_FALSE) {
             return Utily::Error("GLFW3 failed to be initialised");
         }
@@ -134,6 +160,9 @@ namespace Renderer {
         window_width = width;
         window_height = height;
         glfwMakeContextCurrent(*_window);
+
+        g_window = _window;
+#endif
 
 #ifdef CONFIG_TARGET_NATIVE
         glewExperimental = GL_TRUE;
@@ -167,10 +196,17 @@ namespace Renderer {
     }
 
     void OpenglContext::stop() {
+#if defined(CONFIG_TARGET_NATIVE)
         if (_window) {
             glfwDestroyWindow(_window.value());
         }
         glfwTerminate();
+#endif
+    }
+
+    void OpenglContext::swap_buffers() noexcept {
+        validate_window();
+        glfwSwapBuffers(*_window);
     }
 
     void OpenglContext::poll_events() {

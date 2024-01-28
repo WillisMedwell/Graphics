@@ -18,7 +18,7 @@ namespace Renderer {
         Shader(const Shader&) = delete;
         Shader(Shader&&);
 
-        auto init(const std::string_view& vert, const std::string_view& frag) -> Utily::Result<void, Utily::Error>;
+        [[nodiscard]] auto init(const std::string_view& vert, const std::string_view& frag) -> Utily::Result<void, Utily::Error>;
         void stop();
         void bind() noexcept;
         void unbind() noexcept;

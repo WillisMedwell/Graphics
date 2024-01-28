@@ -15,12 +15,15 @@
 #include "AppInput.hpp"
 #include "AppRenderer.hpp"
 
+#include <chrono>
+#include <thread>
+
 struct AppState {
     bool should_close = false;
 };
 
 template <typename T, typename AppData>
-concept HasValidAppLogic = requires(T t, float dt, AppState& state, AppData& data, AppRenderer& renderer, AppInput& input) {
+concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, AppInput& input) {
     {
         t.init(renderer, data)
     } -> std::same_as<void>;
@@ -63,7 +66,7 @@ public:
         _context.stop();
     }
     auto update() -> void {
-        float dt = std::chrono::duration<float> { std::chrono::high_resolution_clock::now() - _last_update }.count();
+        double dt = std::chrono::duration<double> { std::chrono::high_resolution_clock::now() - _last_update }.count();
         _logic.update(dt, _input, _state, _data);
         _last_update = std::chrono::high_resolution_clock::now();
     }
@@ -71,6 +74,7 @@ public:
         _renderer.window_width = _context.window_width;
         _renderer.window_height = _context.window_height;
         _logic.draw(_renderer, _data);
+        _context.swap_buffers();
     }
 
     auto poll_events() -> void {
@@ -86,13 +90,28 @@ public:
 };
 
 template <typename Data, typename Logic>
-void autoRunApp(std::string_view app_name = "Auto Running App") {
-    App<Data, Logic> app;
-    app.init(app_name, 400, 400);
+void auto_run_app(std::string_view app_name = "Auto Running App", uint16_t width = 400, uint16_t height = 400) {
+    static App<Data, Logic> app;
+    app.init(app_name, width, height);
+
+#if defined(CONFIG_TARGET_NATIVE)
     while (app.is_running()) {
         app.poll_events();
         app.update();
         app.render();
     }
     app.stop();
+#elif defined(CONFIG_TARGET_WEB)
+    emscripten_set_main_loop(
+        []() {
+            if (!app.is_running()) {
+                emscripten_cancel_main_loop();
+            }
+            app.poll_events();
+            app.update();
+            app.render();
+        },
+        0,
+        0);
+#endif
 }

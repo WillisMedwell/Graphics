@@ -7,7 +7,6 @@
 #include "Renderer/VertexArray.hpp"
 #include "Renderer/Shader.hpp"
 #include "Renderer/FrameBuffer.hpp"
-#include "Renderer/DefaultFrameBuffer.hpp"
 #include "Renderer/Texture.hpp"
 
 namespace Renderer {

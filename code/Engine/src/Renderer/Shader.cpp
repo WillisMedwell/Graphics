@@ -113,9 +113,9 @@ namespace Renderer {
             }
         }
         if (last_bound != this) {
-            glUseProgram(_program_id.value());
             last_bound = this;
         }
+        glUseProgram(_program_id.value());
     }
     void Shader::unbind() noexcept {
         if constexpr (Config::SKIP_UNBINDING) {

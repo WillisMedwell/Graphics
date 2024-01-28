@@ -25,6 +25,8 @@ public:
     Utily::StaticVector<Renderer::VertexBuffer, 20> vertex_buffers;
     Utily::StaticVector<Renderer::IndexBuffer, 20> index_buffers;
     Utily::StaticVector<Renderer::VertexArray, 20> vertex_arrays;
+    
+    Renderer::ScreenFrameBuffer screen_frame_buffer;
 
     float window_width;
     float window_height;

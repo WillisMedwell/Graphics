@@ -1,11 +1,12 @@
 #pragma once
 
 #include <array>
+#include <iostream>
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace Models {
+namespace Model {
     using Vec2 = glm::vec2;
     using Vec3 = glm::vec3;
     using Quat = glm::quat;
@@ -15,6 +16,14 @@ namespace Models {
         Vec3 position;
         Vec3 normal;
         Vec2 uv_coord;
+
+        friend auto operator<<(std::ostream& stream, const Vertex& vertex) -> std::ostream& {
+            stream << "v(" << vertex.position.x << ',' << vertex.position.y << ',' << vertex.position.z << ") \t"
+                   << "n(" << vertex.normal.x << ',' << vertex.normal.y << ',' << vertex.normal.z << ") \t"
+                   << "uv(" << vertex.uv_coord.x << ',' << vertex.uv_coord.y << ")";
+
+            return stream;
+        }
     };
 
     using Index = uint32_t;
