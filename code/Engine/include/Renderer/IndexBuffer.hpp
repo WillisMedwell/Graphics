@@ -26,7 +26,12 @@ namespace Renderer {
         void load_indices(const Range& indices) noexcept {
             this->bind();
             size_t size_in_bytes = indices.size() * sizeof(uint32_t);
+#if defined(CONFIG_TARGET_NATIVE)
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, &(*indices.begin()), GL_DYNAMIC_DRAW);
+#elif defined(CONFIG_TARGET_WEB)
+            // for some reason, GL_DYNAMIC_DRAW has a very small buffer capacity.
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, &(*indices.begin()), GL_STATIC_DRAW);
+#endif
             _count = indices.size();
         }
 

@@ -48,6 +48,7 @@ namespace Renderer {
         }
         return {};
     }
+    
     auto Texture::upload_image(
         Media::Image& image,
         Filter filter,

@@ -7,9 +7,14 @@
 using namespace std::literals;
 
 namespace Renderer {
+
+    static Shader* last_bound = nullptr;
+
     Shader::Shader(Shader&& other)
         : _program_id(std::exchange(other._program_id, std::nullopt))
-        , _cached_uniforms(std::move(other._cached_uniforms)) { }
+        , _cached_uniforms(std::move(other._cached_uniforms)) {
+        last_bound = nullptr;
+    }
 
     auto Shader::compile_shader(Type type, const std::string_view& source) -> Utily::Result<uint32_t, Utily::Error> {
         constexpr static auto shader_verison =
@@ -103,7 +108,6 @@ namespace Renderer {
     }
 
     // cache it so we dont query the GPU over already bound stuff.
-    static Shader* last_bound = nullptr;
 
     void Shader::bind() noexcept {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {

@@ -4,9 +4,12 @@
 
 namespace Renderer {
     constexpr static uint32_t INVALID_ARRAY_OBJECT_ID = 0;
+    static VertexArray* last_bound = nullptr;
 
     VertexArray::VertexArray(VertexArray&& other)
-        : _id(std::exchange(other._id, std::nullopt)) { }
+        : _id(std::exchange(other._id, std::nullopt)) {
+        last_bound = nullptr;
+    }
 
     auto VertexArray::init() noexcept -> Utily::Result<void, Utily::Error> {
         if (_id) {
@@ -21,14 +24,12 @@ namespace Renderer {
         return {};
     }
 
-    static VertexArray* last_bound = nullptr;
-    
     void VertexArray::stop() noexcept {
         if (_id.value_or(INVALID_ARRAY_OBJECT_ID) == INVALID_ARRAY_OBJECT_ID) {
             glDeleteVertexArrays(1, &_id.value());
         }
         _id = std::nullopt;
-        if(last_bound == this) {
+        if (last_bound == this) {
             last_bound = nullptr;
         }
     }

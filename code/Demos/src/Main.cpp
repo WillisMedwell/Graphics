@@ -83,7 +83,7 @@ struct SpinningTeapotLogic {
             .on_value([&](auto& id) {
                 data.ib_id = id;
             });
-        renderer.add_vertex_array(Model::StaticVertexLayout {}, data.vb_id)
+        renderer.add_vertex_array(Model::Vertex::VBL {}, data.vb_id)
             .on_error(Utily::ErrorHandler::print_then_quit)
             .on_value([&](auto& id) {
                 data.va_id = id;

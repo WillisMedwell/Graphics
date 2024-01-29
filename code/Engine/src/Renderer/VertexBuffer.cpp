@@ -4,9 +4,12 @@
 
 namespace Renderer {
     constexpr static uint32_t INVALID_BUFFER_ID = 0;
+    static VertexBuffer* last_bound = nullptr;
 
     VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept
-        : _id(std::exchange(other._id, std::nullopt)) { }
+        : _id(std::exchange(other._id, std::nullopt)) {
+        last_bound = nullptr;
+    }
 
     auto VertexBuffer::init() noexcept -> Utily::Result<void, Utily::Error> {
         if (_id) {
@@ -21,16 +24,13 @@ namespace Renderer {
         return {};
     }
 
-    static VertexBuffer* last_bound = nullptr;
-
-
     void VertexBuffer::stop() noexcept {
         if (_id.value_or(INVALID_BUFFER_ID) != INVALID_BUFFER_ID) {
             glDeleteBuffers(1, &_id.value());
         }
         _id = std::nullopt;
-        
-        if(last_bound == this) {
+
+        if (last_bound == this) {
             last_bound = this;
         }
     }
@@ -63,7 +63,7 @@ namespace Renderer {
         }
     }
 
-    VertexBuffer::~VertexBuffer() {
+    VertexBuffer::~VertexBuffer() noexcept {
         stop();
     }
 }

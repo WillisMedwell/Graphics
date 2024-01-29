@@ -23,7 +23,7 @@ namespace Renderer {
         void bind() noexcept;
         void unbind() noexcept;
 
-        ~VertexBuffer();
+        ~VertexBuffer() noexcept;
 
         template <typename Range>
             requires std::ranges::range<Range>

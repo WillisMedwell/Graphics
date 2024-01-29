@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Unit/UnitModelStatic.hpp"
+#include "Unit/UnitBenchDrawer.hpp"
 #include "Integration/AssetLoading.hpp"
 #include "Integration/BasicApps.hpp"
 

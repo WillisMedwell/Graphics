@@ -67,7 +67,7 @@ public:
             offset += element.count * element.type_size;
         }
         return 0;
-    }
+    }    
 
     void stop() noexcept;
 };

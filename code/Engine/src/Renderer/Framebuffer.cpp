@@ -40,7 +40,9 @@ namespace Renderer {
 
     FrameBuffer::FrameBuffer(FrameBuffer&& other) noexcept
         : _id(std::exchange(other._id, std::nullopt))
-        , _colour_attachment_index(std::exchange(other._id, std::nullopt)) { }
+        , _colour_attachment_index(std::exchange(other._id, std::nullopt)) {
+        last_bound = nullptr;
+    }
 
     auto FrameBuffer::init(uint32_t width, uint32_t height) noexcept -> Utily::Result<void, Utily::Error> {
         if (_id) {

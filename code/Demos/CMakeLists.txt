@@ -15,10 +15,10 @@ if(DEFINED EMSCRIPTEN)
     
     # Asset embedding.
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
-    file(GLOB_RECURSE ASSET_FILES "${CMAKE_BINARY_DIR}/assets/*")
+    file(GLOB_RECURSE ASSET_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
     set(PRELOAD_FILES "")
     foreach(FILE ${ASSET_FILES})
-        file(RELATIVE_PATH REL_FILE ${CMAKE_BINARY_DIR} ${FILE})
+        file(RELATIVE_PATH REL_FILE ${CMAKE_CURRENT_SOURCE_DIR} ${FILE})
         set(PRELOAD_FILES "${PRELOAD_FILES} --preload-file ${REL_FILE}")
     endforeach()
     message(STATUS "PRELOAD FILES: \"${PRELOAD_FILES}\"")
