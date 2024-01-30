@@ -8,12 +8,12 @@ using namespace std::literals;
 
 namespace Renderer {
 
-    static Shader* last_bound = nullptr;
+    static Shader* last_bound_s = nullptr;
 
     Shader::Shader(Shader&& other)
         : _program_id(std::exchange(other._program_id, std::nullopt))
         , _cached_uniforms(std::move(other._cached_uniforms)) {
-        last_bound = nullptr;
+        last_bound_s = nullptr;
     }
 
     auto Shader::compile_shader(Type type, const std::string_view& source) -> Utily::Result<uint32_t, Utily::Error> {
@@ -116,8 +116,8 @@ namespace Renderer {
                 assert(_program_id.has_value());
             }
         }
-        if (last_bound != this) {
-            last_bound = this;
+        if (last_bound_s != this) {
+            last_bound_s = this;
         }
         glUseProgram(_program_id.value());
     }
@@ -131,9 +131,9 @@ namespace Renderer {
             }
         }
 
-        if (last_bound != this && last_bound != nullptr) {
+        if (last_bound_s != this && last_bound_s != nullptr) {
             glUseProgram(0);
-            last_bound = nullptr;
+            last_bound_s = nullptr;
         }
     }
     void Shader::stop() {
@@ -142,8 +142,8 @@ namespace Renderer {
             glDeleteProgram(*_program_id);
             _program_id = std::nullopt;
         }
-        if (last_bound == this) {
-            last_bound = nullptr;
+        if (last_bound_s == this) {
+            last_bound_s = nullptr;
         }
     }
 

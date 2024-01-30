@@ -122,6 +122,7 @@ struct SpinningTeapotLogic {
         ib.load_indices(model.indices);
         vb.load_vertices(model.vertices);
         glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
+        vb.bind();
     }
 
     void stop() {

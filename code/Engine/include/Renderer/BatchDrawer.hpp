@@ -61,12 +61,12 @@ namespace Renderer {
             constexpr static std::ptrdiff_t mm_uniform_replacement_offset = std::distance(mm_uniform_string.begin(), std::ranges::find(mm_uniform_string, '$'));
 
             // Copy and ensure null ended string.
-            std::array<char, mm_unifrom_string_size + 1> mm_uniform = { mm_uniform_string.begin(), mm_uniform_string.end() };
-            mm_uniform.back() = '\0';
+            std::array<char, mm_unifrom_string_size + 1> mm_uniform { '\0' };
+            std::ranges::copy(mm_uniform_string, mm_uniform.begin());
 
             uint32_t i = 0;
             auto vert_iter = vertices_buffer.begin();
-            auto indi_iter = vertices_buffer.begin();
+            auto indi_iter = indices_buffer.begin();
             for (auto& [model, transform, texture] : textured_models) {
                 const auto tex_unit = texture.bind(true).on_error(Utily::ErrorHandler::print_then_quit).value();
                 const auto index_offset = static_cast<Model::Index>(std::distance(vertices_buffer.begin(), vert_iter));
@@ -78,11 +78,11 @@ namespace Renderer {
 
                 // Account for index offset
                 auto add_index_offset = [&](Model::Index index) { return index + index_offset; };
-                auto indi_iter = std::ranges::copy(model.indices | add_index_offset, indi_iter);
+                indi_iter = std::ranges::copy(model.indices | add_index_offset, indi_iter);
 
                 // Add texture index and model transform index
                 auto add_tex_unit = [&](const Model::Vertex& v) { return Model::BatchingVertex { v.position, v.normal, v.uv_coord, tex_unit, i }; };
-                auto vert_iter = std::ranges::copy(model.vertices | add_tex_unit, vert_iter);
+                vert_iter = std::ranges::copy(model.vertices | add_tex_unit, vert_iter);
 
                 ++i;
             }

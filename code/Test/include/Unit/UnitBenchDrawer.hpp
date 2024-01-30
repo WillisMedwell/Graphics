@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Renderer/BatchDrawer.hpp"
-#include "Utily/Utily.hpp"
-#include <gtest/gtest.h>
+#include "TestPch.hpp"
 
 #include <App.hpp>
 #include <iostream>

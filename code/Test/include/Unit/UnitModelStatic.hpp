@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Model/Model.hpp"
-#include "Utily/Utily.hpp"
-#include <gtest/gtest.h>
+#include "TestPch.hpp"
 
 #include <App.hpp>
 #include <iostream>

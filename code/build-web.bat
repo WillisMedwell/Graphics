@@ -1,7 +1,7 @@
 set VCPKG_PATH=C:/apps/vcpkg/vcpkg/
 set EMSDK=C:/apps/emscripten/emsdk/
 set EMSCRIPTEN=C:/apps/emscripten/emsdk/upstream/emscripten/
-set BUILD_TYPE=Release
+set BUILD_TYPE=Debug
 
 if not exist "build-web\" (
     mkdir build-web

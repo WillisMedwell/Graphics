@@ -31,6 +31,8 @@ if(NOT MSVC)
     target_compile_options(Engine PRIVATE -fexperimental-library -Wall -Wextra -Wpedantic)
 endif()
 
+target_precompile_headers(Engine PRIVATE include/EnginePch.hpp)
+
 if(DEFINED EMSCRIPTEN)
     target_link_libraries(Engine PUBLIC 
         glm::glm assimp::assimp EnTT::EnTT Utily::Utily lodepng ${BULLET_LIBRARIES} 

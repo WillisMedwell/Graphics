@@ -8,6 +8,8 @@ file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 
 add_executable(Test ${TEST_SOURCES} ${TEST_HEADERS})
 
+target_precompile_headers(Test PRIVATE include/TestPch.hpp ${CMAKE_CURRENT_INCLUDE_DIR}/Engine.hpp)
+
 if(DEFINED EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' --closure 1") 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gtest/gtest.h>
+#include "TestPch.hpp"
 
 #include <iostream>
 #include <thread>
