@@ -8,7 +8,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 
 add_executable(Test ${TEST_SOURCES} ${TEST_HEADERS})
 
-target_precompile_headers(Test PRIVATE include/TestPch.hpp ${CMAKE_CURRENT_INCLUDE_DIR}/Engine.hpp)
+target_precompile_headers(Test PRIVATE include/TestPch.hpp ../Engine/include/Engine.hpp)
 
 if(DEFINED EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")

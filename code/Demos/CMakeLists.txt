@@ -8,7 +8,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/.clang-tidy DESTINATION ${CMAKE_CURRENT_BINARY_DIR
 
 add_executable(Demos ${DEMOS_SOURCES} ${DEMOS_HEADERS})
 
-target_precompile_headers(Demos PUBLIC ${CMAKE_CURRENT_INCLUDE_DIR}/Engine.hpp)
+target_precompile_headers(Demos PRIVATE ../Engine/include/Engine.hpp)
 
 if(DEFINED EMSCRIPTEN)        
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' -s EXPORT_NAME=\"'WasmModuleDemos'\"") 
