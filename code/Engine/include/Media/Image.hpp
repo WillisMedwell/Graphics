@@ -11,10 +11,11 @@
 namespace Media {
 
     enum class ColourFormat : uint32_t {
+        greyscale = GL_R8,
         rgb = GL_RGB8,
         rgba = GL_RGBA8,
         s_rgb = GL_SRGB8,
-        s_rgba = GL_SRGB8_ALPHA8
+        s_rgba = GL_SRGB8_ALPHA8,
     };
 
     class Image
@@ -30,11 +31,20 @@ namespace Media {
             bool is_gamma_corrected) noexcept
             -> Utily::Result<void, Utily::Error>;
 
+        [[nodiscard]] auto init_raw(
+            std::vector<uint8_t>&& raw_data,
+            uint32_t width,
+            uint32_t height,
+            ColourFormat format) noexcept
+            -> Utily::Result<void, Utily::Error>;
+
+        [[nodiscard]] auto save_to_disk(std::filesystem::path path) noexcept
+            -> Utily::Result<void, Utily::Error>;
+
         void stop() noexcept;
-        
+
         void resize(float scale) noexcept;
         void resize(uint32_t width, uint32_t height) noexcept;
-
 
         [[nodiscard]] auto data() noexcept -> std::optional<std::tuple<std::span<const uint8_t>, uint32_t, uint32_t, ColourFormat>>;
 

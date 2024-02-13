@@ -21,6 +21,11 @@ namespace Media {
         bool is_gamma_corrected) noexcept
         -> Utily::Result<void, Utily::Error> {
 
+        if (_fence) {
+            _fence->wait_for_sync();
+            _fence = std::nullopt;
+        }
+
         if (_data.size()) {
             _data.clear();
         }
@@ -47,6 +52,8 @@ namespace Media {
             case ColourFormat::rgba:
             case ColourFormat::s_rgba:
                 return LodePNGColorType::LCT_RGBA;
+            case ColourFormat::greyscale:
+                return LodePNGColorType::LCT_GREY;
             }
         };
 
@@ -64,6 +71,41 @@ namespace Media {
             }
         }
         _data.shrink_to_fit();
+        return {};
+    }
+
+    auto Image::init_raw(
+        std::vector<uint8_t>&& raw_data,
+        uint32_t width,
+        uint32_t height,
+        ColourFormat format) noexcept
+        -> Utily::Result<void, Utily::Error> {
+        if (_fence) {
+            _fence->wait_for_sync();
+            _fence = std::nullopt;
+        }
+        _data = std::move(raw_data);
+        _format = format;
+        _width = width;
+        _height = height;
+
+        if (format == ColourFormat::greyscale && _data.size() != _width * _height) {
+            return Utily::Error("Unexpected image size");
+        }
+        return {};
+    }
+
+    auto Image::save_to_disk(std::filesystem::path path) noexcept
+        -> Utily::Result<void, Utily::Error> {
+        std::vector<uint8_t> encoded;
+        lodepng::State state;
+        state.info_raw.colortype = LodePNGColorType::LCT_GREY;
+        if (auto error = lodepng::encode(encoded, _data, _width, _height, state); error) {
+            return Utily::Error { lodepng_error_text(error) };
+        }
+        if (auto error = lodepng::save_file(encoded, path.string()); error) {
+            return Utily::Error { lodepng_error_text(error) };
+        }
         return {};
     }
 

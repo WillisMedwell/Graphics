@@ -14,5 +14,5 @@ call cmake --build . --config %BUILD_TYPE%
 
 cd Test
 call Test
-cd ../Demos
-call Demos
+@REM cd ../Demos
+@REM call Demos

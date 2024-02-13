@@ -199,6 +199,7 @@ namespace Renderer {
 #if defined(CONFIG_TARGET_NATIVE)
         if (_window) {
             glfwDestroyWindow(_window.value());
+            _window = std::nullopt;
         }
         glfwTerminate();
 #endif

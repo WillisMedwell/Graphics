@@ -166,6 +166,7 @@ struct SpinningSquareLogic {
     void stop() {
     }
 };
+
 struct SpinningTeapotData {
     std::chrono::steady_clock::time_point start_time;
     entt::entity teapot;
@@ -200,7 +201,7 @@ struct SpinningTeapotData {
 struct SpinningTeapotLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, SpinningTeapotData& data) {
 
-        auto print_pause_quit = [&](auto error){
+        auto print_pause_quit = [&](auto error) {
             std::cerr << error.what() << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             exit(-1);
@@ -284,6 +285,37 @@ struct SpinningTeapotLogic {
     }
 };
 
+struct FontData {
+    std::chrono::steady_clock::time_point start_time;
+    glm::vec4 background_colour = { 0, 0, 0, 1.0f };
+    Media::Font font;
+};
+struct FontLogic {
+    void init(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
+        data.start_time = std::chrono::high_resolution_clock::now();
+        auto ttf_raw = Utily::FileReader::load_entire_file("assets/Roboto.ttf");
+
+        auto e2 = data.font.init(ttf_raw.value());
+        auto e3 = data.font.gen_image_atlas(100);
+
+        EXPECT_FALSE(ttf_raw.has_error());
+        EXPECT_FALSE(e2.has_error());
+        EXPECT_FALSE(e3.has_error());
+        EXPECT_FALSE(e3.value().save_to_disk("Roboto.png").has_error());
+    }
+    void update(float dt, AppInput& input, AppState& state, entt::registry& ecs, FontData& data) {
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
+        if (duration > std::chrono::seconds(1)) {
+            state.should_close = true;
+        }
+    }
+    void draw(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
+        renderer.screen_frame_buffer.clear(data.background_colour);
+    }
+    void stop() {
+    }
+};
+
 #if defined(CONFIG_TARGET_NATIVE)
 TEST(BasicApps, background_colour) {
     auto_run_app<BackgroundColourData, BackgroundColourLogic>("Test App: Background Colour ");
@@ -294,8 +326,28 @@ TEST(BasicApps, spinning_square) {
 TEST(BasicApps, spinning_teapot) {
     auto_run_app<SpinningTeapotData, SpinningTeapotLogic>("Test App: Spinning Teapot");
 }
+TEST(BasicApps, font_rendering) {
+    auto_run_app<FontData, FontLogic>("Test App: Font Rendering");
+}
 
 #elif defined(CONFIG_TARGET_WEB)
+
+void run_font_renderer() {
+    static App<FontData, FontLogic> st_app;
+    st_app.init("font", 400, 400);
+    emscripten_set_main_loop(
+        []() {
+            if (!st_app.is_running()) {
+                emscripten_cancel_main_loop();
+            }
+            st_app.poll_events();
+            st_app.update();
+            st_app.render();
+        },
+        0,
+        1);
+}
+
 
 void run_spinning_teapot() {
     static App<SpinningTeapotData, SpinningTeapotLogic> st_app;
@@ -304,6 +356,7 @@ void run_spinning_teapot() {
         []() {
             if (!st_app.is_running()) {
                 emscripten_cancel_main_loop();
+                run_font_renderer();
             }
             st_app.poll_events();
             st_app.update();

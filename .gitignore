@@ -30,6 +30,7 @@
 *.out
 *.app
 
+.vs/
 .vscode/
 **/build/
 **/build-web/
