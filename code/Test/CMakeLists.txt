@@ -25,14 +25,20 @@ if(DEFINED EMSCRIPTEN)
     message(STATUS "PRELOAD FILES: \"${PRELOAD_FILES}\"")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PRELOAD_FILES}")
 else()
-    if(NOT MSVC)
+    if(MSVC)
+        target_compile_options(Test PRIVATE 
+            "$<$<CONFIG:Debug>:/Od;/ZI;/RTCs;/MDd>"
+            "$<$<CONFIG:Release>:/O2;/arch:AVX>"
+        )
+    else()
         target_compile_options(Test PRIVATE -Wall -Wextra -Wpedantic -Wno-unused-parameter)
         target_link_options(Test PRIVATE -Wall -Wextra -Wpedantic -Wno-unused-parameter)
-        target_compile_options(Test PUBLIC 
+        target_compile_options(Test PRIVATE
             "$<$<CONFIG:Debug>:-O0;-g;-fno-omit-frame-pointer>"
-            "$<$<CONFIG:Release>:-O3>"
+            "$<$<CONFIG:Release>:-O3;-march=native>"
         )
     endif()
+
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 

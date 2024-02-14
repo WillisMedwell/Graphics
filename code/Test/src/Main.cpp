@@ -1,9 +1,9 @@
 #include "TestPch.hpp"
 
-#include "Integration/AssetLoading.hpp"
-#include "Integration/BasicApps.hpp"
 #include "Unit/UnitBenchDrawer.hpp"
 #include "Unit/UnitModelStatic.hpp"
+#include "Integration/AssetLoading.hpp"
+#include "Integration/BasicApps.hpp"
 
 
 int main(int argc, char** argv) {

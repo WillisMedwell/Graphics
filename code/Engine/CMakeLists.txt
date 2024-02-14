@@ -55,12 +55,12 @@ else()
         OpenGL::GL OpenAL::OpenAL GLEW::GLEW glfw 
     )
     if(MSVC)
-        target_compile_options(Engine PUBLIC 
-            "$<$<CONFIG:Debug>:/Od;/Zi;/RTCs>"
+        target_compile_options(Engine PRIVATE 
+            "$<$<CONFIG:Debug>:/Od;/ZI;/RTCs;/MDd>"
             "$<$<CONFIG:Release>:/O2;/arch:AVX>"
         )
     else()
-        target_compile_options(Engine PUBLIC 
+        target_compile_options(Engine PRIVATE
             "$<$<CONFIG:Debug>:-O0;-g;-fno-omit-frame-pointer>"
             "$<$<CONFIG:Release>:-O3;-march=native>"
         )

@@ -31,12 +31,7 @@ namespace Media {
             bool is_gamma_corrected) noexcept
             -> Utily::Result<void, Utily::Error>;
 
-        [[nodiscard]] auto init_raw(
-            std::vector<uint8_t>&& raw_data,
-            uint32_t width,
-            uint32_t height,
-            ColourFormat format) noexcept
-            -> Utily::Result<void, Utily::Error>;
+        void init_raw(std::vector<uint8_t>&& raw_data, uint32_t width, uint32_t height, ColourFormat format) noexcept;
 
         [[nodiscard]] auto save_to_disk(std::filesystem::path path) noexcept
             -> Utily::Result<void, Utily::Error>;

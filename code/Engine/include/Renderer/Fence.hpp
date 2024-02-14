@@ -11,7 +11,7 @@ namespace Renderer {
     public:
         Fence() = default;
         Fence(const Fence&) = delete;
-        Fence(Fence&& other)
+        Fence(Fence&& other) noexcept
             : _id(std::exchange(other._id, std::nullopt)) {
         }
 

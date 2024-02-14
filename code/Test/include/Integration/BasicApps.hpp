@@ -293,7 +293,7 @@ struct FontData {
 struct FontLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
         data.start_time = std::chrono::high_resolution_clock::now();
-        auto ttf_raw = Utily::FileReader::load_entire_file("assets/Roboto.ttf");
+        auto ttf_raw = Utily::FileReader::load_entire_file("assets/RobotoMono.ttf");
 
         auto e2 = data.font.init(ttf_raw.value());
         auto e3 = data.font.gen_image_atlas(100);

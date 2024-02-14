@@ -74,12 +74,7 @@ namespace Media {
         return {};
     }
 
-    auto Image::init_raw(
-        std::vector<uint8_t>&& raw_data,
-        uint32_t width,
-        uint32_t height,
-        ColourFormat format) noexcept
-        -> Utily::Result<void, Utily::Error> {
+    void Image::init_raw(std::vector<uint8_t>&& raw_data, uint32_t width, uint32_t height, ColourFormat format) noexcept {
         if (_fence) {
             _fence->wait_for_sync();
             _fence = std::nullopt;
@@ -88,11 +83,6 @@ namespace Media {
         _format = format;
         _width = width;
         _height = height;
-
-        if (format == ColourFormat::greyscale && _data.size() != _width * _height) {
-            return Utily::Error("Unexpected image size");
-        }
-        return {};
     }
 
     auto Image::save_to_disk(std::filesystem::path path) noexcept
