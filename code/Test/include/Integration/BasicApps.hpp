@@ -297,11 +297,13 @@ struct FontLogic {
 
         auto e2 = data.font.init(ttf_raw.value());
         auto e3 = data.font.gen_image_atlas(100);
+        auto e4 = std::get<0>(e3.value()).save_to_disk("Roboto.png");
 
         EXPECT_FALSE(ttf_raw.has_error());
         EXPECT_FALSE(e2.has_error());
         EXPECT_FALSE(e3.has_error());
-        EXPECT_FALSE(e3.value().save_to_disk("Roboto.png").has_error());
+        EXPECT_FALSE(e4.has_error());
+        e4.on_error(Utily::ErrorHandler::print_then_quit);
     }
     void update(float dt, AppInput& input, AppState& state, entt::registry& ecs, FontData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);

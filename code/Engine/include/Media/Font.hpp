@@ -4,6 +4,7 @@
 
 #include "Media/Image.hpp"
 #include <array>
+#include <glm/vec2.hpp>
 #include <limits>
 #include <ranges>
 
@@ -22,16 +23,10 @@ namespace Media {
 
         consteval static auto gen_is_char_drawable_table() -> std::array<bool, 256> {
             auto table = std::array<bool, 256> { false };
-#if 0
-            for (auto [i, e] : table | std::views::enumerate) {
-                e = std::ranges::contains(DRAWABLE_CHARS, static_cast<char>(i));
-            }
-#else
             std::ptrdiff_t i = 0;
             for (auto iter = table.begin(); iter != table.end(); ++iter, ++i) {
                 *iter = std::ranges::find(DRAWABLE_CHARS, static_cast<char>(i)) != DRAWABLE_CHARS.end();
             }
-#endif
             return table;
         }
         constexpr static auto IS_CHAR_DRAWABLE = gen_is_char_drawable_table();
@@ -45,7 +40,7 @@ namespace Media {
         Font(Font&& other);
 
         [[nodiscard]] auto init(std::vector<uint8_t>& encoded_ttf) noexcept -> Utily::Result<void, Utily::Error>;
-        [[nodiscard]] auto gen_image_atlas(uint32_t char_height_px) -> Utily::Result<Media::Image, Utily::Error>;
+        [[nodiscard]] auto gen_image_atlas(uint32_t char_height_px) -> Utily::Result<std::tuple<Media::Image, int, int>, Utily::Error>;
 
         void stop() noexcept;
 

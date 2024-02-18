@@ -74,7 +74,7 @@ namespace Media {
         }
     };
 
-    auto Font::gen_image_atlas(uint32_t char_height_px) -> Utily::Result<Media::Image, Utily::Error> {
+    auto Font::gen_image_atlas(uint32_t char_height_px) -> Utily::Result<std::tuple<Media::Image, int, int>, Utily::Error> {
         constexpr auto& drawable_chars = FontAtlasConstants::DRAWABLE_CHARS;
 
         // Validate and Scale FreeType Face.
@@ -98,10 +98,10 @@ namespace Media {
             ftg = FreeTypeGlyph(ff->glyph);
             return GlyphInfo(ff->glyph);
         };
-        auto cached_ft_bitmaps = std::array<FreeTypeGlyph, drawable_chars.size()> {};
 
+        auto cached_ft_bitmaps = std::array<FreeTypeGlyph, drawable_chars.size()> {};
         // 1. Transform -> Generates and caches the freetype bitmaps & returns its glyph layout
-        // 2. Reduce    -> Calculate a general glyph layout for the atlas.
+        // 2. Reduce    -> Calculate the maximum bounding glyph layout, so all characters have enough space in atlas.
         auto atlas_info = std::transform_reduce(
             drawable_chars.begin(),
             drawable_chars.end(),
@@ -110,42 +110,58 @@ namespace Media {
             &GlyphInfo::take_max_values,
             generate_and_cache_ft_glyph);
 
-        const size_t atlas_buffer_size = atlas_info.width * atlas_info.height * drawable_chars.size();
-        std::vector<uint8_t> atlas_buffer(atlas_buffer_size);
+        const auto [atlas_glyphs_per_row, atlas_num_rows] = [](float glyph_width, float glyph_height, float num_glyphs_in_atlas) {
+#if 1 // generate most square shape by brute force.
+            auto [min_diff, min_x, min_y] = std::tuple{ std::numeric_limits<float>::max(), 0, num_glyphs_in_atlas };
+            for (float i = 1; i < num_glyphs_in_atlas; ++i) {
+                auto x = i;
+                auto y = num_glyphs_in_atlas / i;
+                x = std::floor(x);
+                y = std::ceil(y);
+                auto diff = std::abs((x * glyph_width) - (y * glyph_height));
+                if (diff < min_diff && num_glyphs_in_atlas <= x * y) {
+                    min_diff = diff;
+                    min_x = x;
+                    min_y = y;
+                }
+            }
+#else
+            float expected_dimensions = std::sqrtf(num_glyphs_in_atlas);
+            float ratio = glyph_height / glyph_width;
+            float min_x = std::floor(expected_dimensions * ratio);
+            float min_y = std::ceil(expected_dimensions / ratio);
+            assert(num_glyphs_in_atlas < min_x * min_y);
+#endif
+            return std::tuple<int, int> { min_x, min_y };
+        }(atlas_info.width, atlas_info.height, drawable_chars.size());
+
+        const int atlas_img_height = atlas_info.height * atlas_num_rows;
+        const int atlas_img_width = atlas_info.width * atlas_glyphs_per_row;
+
+        std::vector<uint8_t> atlas_buffer(atlas_img_height * atlas_img_width);
         std::ranges::fill(atlas_buffer, (uint8_t)0);
 
-#if 1
         for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(drawable_chars.size()); ++i) {
-            const auto& bitmap_ft = cached_ft_bitmaps.at(i);
-            uint8_t* bitmap_atlas = atlas_buffer.data() + (atlas_info.width * atlas_info.height * i);
+            const auto& bitmap_ft = cached_ft_bitmaps[i];
+            const auto atlas_coords = glm::ivec2 { i % atlas_glyphs_per_row, i / atlas_glyphs_per_row };
+            const auto adjusted_offset = glm::ivec2 { atlas_coords.x * atlas_info.width, atlas_coords.y * atlas_info.height };
+
+            auto get_atlas_buffer_dest = [&](int x, int y) -> uint8_t& {
+                const auto px_coords = glm::ivec2(adjusted_offset.x + x, adjusted_offset.y + y);
+                return atlas_buffer[px_coords.y * atlas_img_width + px_coords.x];
+            };
             for (std::ptrdiff_t y = 0; y < bitmap_ft.height; ++y) {
                 for (std::ptrdiff_t x = 0; x < bitmap_ft.width; ++x) {
-                    const std::ptrdiff_t atlas_y = y + atlas_info.spanline - bitmap_ft.spanline;
-                    const std::ptrdiff_t atlas_x = x;
-                    const std::ptrdiff_t atlas_offset = atlas_info.width * atlas_y + atlas_x;
+                    // align to relative bitmap
+                    const std::ptrdiff_t relative_y = (y + atlas_info.spanline - bitmap_ft.spanline);
                     const std::ptrdiff_t ft_offset = y * bitmap_ft.width + x;
-                    bitmap_atlas[atlas_offset] = bitmap_ft.buffer[ft_offset];
+                    get_atlas_buffer_dest(x, relative_y) = bitmap_ft.buffer[ft_offset];
                 }
             }
         }
-#else
-        // safer version
-        auto atlas_bitmaps = atlas_buffer | std::views::chunk(atlas_info.width * atlas_info.height);
-        for (auto [bitmap_ft, bitmap_atlas] : std::views::zip(cached_ft_bitmaps, atlas_bitmaps)) {
-            for (std::ptrdiff_t y = 0; y < bitmap_ft.height; ++y) {
-                for (std::ptrdiff_t x = 0; x < bitmap_ft.width; ++x) {
-                    const std::ptrdiff_t atlas_y = y + atlas_info.spanline - bitmap_ft.spanline;
-                    const std::ptrdiff_t atlas_x = x;
-                    const std::ptrdiff_t atlas_offset = atlas_info.width * atlas_y + atlas_x;
-                    const std::ptrdiff_t ft_offset = y * bitmap_ft.width + x;
-                    bitmap_atlas[atlas_offset] = bitmap_ft.buffer[ft_offset];
-                }
-            }
-        }
-#endif
         Media::Image image;
-        image.init_raw(std::move(atlas_buffer), atlas_info.width, atlas_info.height * drawable_chars.size(), Media::ColourFormat::greyscale);
-        return std::move(image);
+        image.init_raw(std::move(atlas_buffer), atlas_img_width, atlas_img_height, ColourFormat::greyscale);
+        return std::tuple{ std::move(image), atlas_num_rows, atlas_glyphs_per_row };
     }
 
     void Font::stop() noexcept {

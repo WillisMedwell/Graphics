@@ -91,10 +91,10 @@ namespace Media {
         lodepng::State state;
         state.info_raw.colortype = LodePNGColorType::LCT_GREY;
         if (auto error = lodepng::encode(encoded, _data, _width, _height, state); error) {
-            return Utily::Error { lodepng_error_text(error) };
+            return Utily::Error { std::string("Image.save_to_disk() failed to be converted to png: ") + lodepng_error_text(error) };
         }
         if (auto error = lodepng::save_file(encoded, path.string()); error) {
-            return Utily::Error { lodepng_error_text(error) };
+            return Utily::Error { std::string("Image.save_to_disk() failed to save: ") + lodepng_error_text(error) };
         }
         return {};
     }
