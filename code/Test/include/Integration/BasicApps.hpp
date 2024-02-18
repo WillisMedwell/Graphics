@@ -340,6 +340,18 @@ void run_font_renderer() {
     emscripten_set_main_loop(
         []() {
             if (!st_app.is_running()) {
+                EM_ASM_({
+                    var filename = "Roboto.png";
+                    var fileContents = FS.readFile(filename);
+                    var blob = new Blob([fileContents], { type: 'application/octet-stream' });
+                    var a = document.createElement('a');
+                    document.body.appendChild(a);
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename;
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                });
                 emscripten_cancel_main_loop();
             }
             st_app.poll_events();
@@ -349,7 +361,6 @@ void run_font_renderer() {
         0,
         1);
 }
-
 
 void run_spinning_teapot() {
     static App<SpinningTeapotData, SpinningTeapotLogic> st_app;
