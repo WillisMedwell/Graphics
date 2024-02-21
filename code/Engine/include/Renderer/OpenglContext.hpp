@@ -21,6 +21,10 @@ namespace Renderer {
         void swap_buffers() noexcept;
         [[nodiscard]] auto should_close() -> bool;
 
+        [[nodiscard]] inline auto unsafe_window_handle() noexcept -> void* {
+            return reinterpret_cast<void*>(_window.value_or(nullptr));
+        }
+
         uint_fast16_t window_width, window_height;
     };
 }

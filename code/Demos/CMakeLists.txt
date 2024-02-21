@@ -11,7 +11,10 @@ add_executable(Demos ${DEMOS_SOURCES} ${DEMOS_HEADERS})
 target_precompile_headers(Demos PRIVATE ../Engine/include/Engine.hpp)
 
 if(DEFINED EMSCRIPTEN)        
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' -s EXPORT_NAME=\"'WasmModuleDemos'\"") 
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' --closure 1") 
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s EXPORTED_FUNCTIONS='_main' -s EXPORT_NAME=\"'WasmModuleDemos'\"") 
+
     # Move index.html.
     file(COPY ${CMAKE_SOURCE_DIR}/index.html DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     

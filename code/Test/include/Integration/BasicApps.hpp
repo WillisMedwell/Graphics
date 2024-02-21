@@ -41,7 +41,7 @@ struct BackgroundColourLogic {
         EXPECT_FALSE(renderer.add_index_buffer().has_error());
         EXPECT_FALSE(renderer.add_vertex_array(VBL {}, renderer.add_vertex_buffer().value()).has_error());
     }
-    void update(float dt, AppInput& input, AppState& state, entt::registry& ecs, BackgroundColourData& data) {
+    void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, BackgroundColourData& data) {
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
 
@@ -127,7 +127,7 @@ struct SpinningSquareLogic {
                 data.va_id = id;
             });
     }
-    void update(double dt, AppInput& input, AppState& state, entt::registry& ecs, SpinningSquareData& data) {
+    void update(double dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, SpinningSquareData& data) {
 
         data.angle = data.angle + data.ROTATIONS_PER_SECOND * 360.0 * dt;
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
@@ -241,7 +241,7 @@ struct SpinningTeapotLogic {
             });
         data.start_time = std::chrono::high_resolution_clock::now();
     }
-    void update(double dt, AppInput& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
+    void update(double dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
         ecs.get<Components::Transform>(data.teapot).rotation = ecs.get<Components::Spinning>(data.teapot)
                                                                    .update(dt)
                                                                    .calc_quat();
@@ -297,7 +297,7 @@ struct FontLogic {
 
         auto e2 = data.font.init(ttf_raw.value());
         auto e3 = data.font.gen_image_atlas(100);
-        auto e4 = std::get<0>(e3.value()).save_to_disk("Roboto.png");
+        auto e4 = std::get<0>(e3.value()).save_to_disk("FontAtlasGeneration.png");
 
         EXPECT_FALSE(ttf_raw.has_error());
         EXPECT_FALSE(e2.has_error());
@@ -305,7 +305,7 @@ struct FontLogic {
         EXPECT_FALSE(e4.has_error());
         e4.on_error(Utily::ErrorHandler::print_then_quit);
     }
-    void update(float dt, AppInput& input, AppState& state, entt::registry& ecs, FontData& data) {
+    void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
         if (duration > std::chrono::seconds(1)) {
             state.should_close = true;
@@ -341,7 +341,7 @@ void run_font_renderer() {
         []() {
             if (!st_app.is_running()) {
                 EM_ASM_({
-                    var filename = "Roboto.png";
+                    var filename = "FontAtlasGeneration.png";
                     var fileContents = FS.readFile(filename);
                     var blob = new Blob([fileContents], { type: 'application/octet-stream' });
                     var a = document.createElement('a');

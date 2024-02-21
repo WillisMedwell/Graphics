@@ -12,7 +12,8 @@
 #include "Cameras/Cameras.hpp"
 #include "Renderer/Renderer.hpp"
 
-#include "AppInput.hpp"
+#include "Io/Input.hpp"
+
 #include "AppRenderer.hpp"
 
 #include <chrono>
@@ -23,7 +24,7 @@ struct AppState {
 };
 
 template <typename T, typename AppData>
-concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, AppInput& input, entt::registry& ecs) {
+concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, const Io::InputManager& input, entt::registry& ecs) {
     {
         t.init(renderer, ecs, data)
     } -> std::same_as<void>;
@@ -44,7 +45,7 @@ class App
 {
 private:
     AppState _state;
-    AppInput _input;
+    Io::InputManager _input;
     AppRenderer _renderer;
     entt::registry _ecs;
     AppData _data;
@@ -59,6 +60,7 @@ public:
         _context.init(app_name, width, height).on_error(Utily::ErrorHandler::print_then_quit);
         _ecs = entt::registry {};
         _logic.init(_renderer, _ecs, _data);
+        _input.init(_context.unsafe_window_handle());
         _has_init = true;
     }
     auto stop() -> void {

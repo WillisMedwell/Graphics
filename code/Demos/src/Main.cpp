@@ -12,17 +12,17 @@
 
 using namespace std::literals;
 
-void* operator new(std::size_t size) {
-    std::cout << "Custom new called, size = " << size << std::endl;
-    void* memory = std::malloc(size);
-    return memory;
-}
+// void* operator new(std::size_t size) {
+//     std::cout << "Custom new called, size = " << size << std::endl;
+//     void* memory = std::malloc(size);
+//     return memory;
+// }
 
-void* operator new[](std::size_t size) {
-    std::cout << "Custom new[] called, size = " << size << std::endl;
-    void* memory = std::malloc(size);
-    return memory;
-}
+// void* operator new[](std::size_t size) {
+//     std::cout << "Custom new[] called, size = " << size << std::endl;
+//     void* memory = std::malloc(size);
+//     return memory;
+// }
 
 struct SpinningTeapotData {
     entt::entity teapot;
@@ -54,11 +54,35 @@ struct SpinningTeapotData {
         "    FragColor = vec4(color, 1.0); "
         "}"sv;
 };
+
+class TimingBomb
+{
+public:
+    // Constructor
+    TimingBomb(const std::string& message)
+        : _message(message)
+        , _start(std::chrono::steady_clock::now()) { }
+
+    // Destructor
+    ~TimingBomb() {
+        auto end = std::chrono::steady_clock::now();
+        std::chrono::duration<double> elapsed_seconds = end - _start;
+        std::cout << _message << ": " << elapsed_seconds.count() << "s\n";
+    }
+
+private:
+    std::string _message;
+    std::chrono::time_point<std::chrono::steady_clock> _start;
+};
+
 struct SpinningTeapotLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, SpinningTeapotData& data) {
+
+        TimingBomb tb("Spinning teapot logic init");
         auto teapot_source = Utily::FileReader::load_entire_file("assets/teapot.obj")
                                  .on_error(Utily::ErrorHandler::print_then_quit)
                                  .value();
+
         auto teapot_model = std::move(Model::decode_as_static_model(teapot_source, { '.', 'o', 'b', 'j' })
                                           .on_error(Utily::ErrorHandler::print_then_quit)
                                           .value());
@@ -89,10 +113,20 @@ struct SpinningTeapotLogic {
                 data.va_id = id;
             });
     }
-    void update(double dt, AppInput& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
+    void update(double dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
         ecs.get<Components::Transform>(data.teapot).rotation = ecs.get<Components::Spinning>(data.teapot)
                                                                    .update(dt)
                                                                    .calc_quat();
+
+        if (auto state = input.get_key_state(Io::Inputs::Keyboard::w); state == Io::InputState::Keyboard::pressed || state == Io::InputState::Keyboard::held) {
+            std::cout << "w\n";
+        }
+
+        auto mouse_pos = input.get_mouse_state().position;
+        std::cout << mouse_pos.x << ' ' << mouse_pos.y << '\n';
+        if (auto state = input.get_mouse_state().button_left; state == Io::InputState::Keyboard::pressed || state == Io::InputState::Keyboard::held) {
+            std::cout << "mouse down\n";
+        }
     }
 
     void draw(AppRenderer& renderer, entt::registry& ecs, SpinningTeapotData& data) {
