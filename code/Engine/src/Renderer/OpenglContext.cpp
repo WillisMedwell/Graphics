@@ -187,6 +187,8 @@ namespace Renderer {
 
         validate_window();
 
+        
+
         return {};
     }
 

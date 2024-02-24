@@ -15,6 +15,21 @@ namespace Media {
         , _height(std::exchange(other._height, 0)) {
     }
 
+    Image& Image::operator=(Image&& other) noexcept
+    {
+        if (_fence) {
+            _fence.value().wait_for_sync();
+        }
+        if (other._fence) {
+            other._fence.value().wait_for_sync();
+        }
+        std::swap(this->_data, other._data);
+        std::swap(this->_format, other._format);
+        std::swap(this->_width, other._width);
+        std::swap(this->_height, other._height);
+        return *this;
+    }
+
     auto Image::init(
         std::vector<uint8_t>& encoded_png,
         bool include_alpha_channel,

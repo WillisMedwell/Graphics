@@ -24,6 +24,8 @@ namespace Media {
         Image() = default;
         Image(const Image&) = delete;
         Image(Image&& other);
+        
+        Image& operator=(Image&& other) noexcept;
 
         [[nodiscard]] auto init(
             std::vector<uint8_t>& encoded_png,
@@ -45,6 +47,10 @@ namespace Media {
 
         void add_fence(Renderer::Fence&& fence) noexcept;
         ~Image();
+
+        [[nodiscard]] inline auto width() const noexcept { return _width; }
+        [[nodiscard]] inline auto height() const noexcept { return _height; }
+
 
     private:
         std::vector<uint8_t> _data;

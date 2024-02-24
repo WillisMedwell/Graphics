@@ -71,7 +71,7 @@ namespace Renderer {
             return vr.error();
         } else if (fr.has_error()) {
             stop();
-            return vr.error();
+            return fr.error();
         }
 
         glAttachShader(_program_id.value(), vr.value());

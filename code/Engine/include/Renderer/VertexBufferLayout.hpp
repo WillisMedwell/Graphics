@@ -47,7 +47,7 @@ namespace Renderer {
             } else if constexpr (isVec2f<T>) {
                 return sizeof(float) * 2;
             }
-            return 0;
+            throw std::runtime_error("Not implemented");
         }
 
         template <typename T>
@@ -70,7 +70,7 @@ namespace Renderer {
         }
 
         consteval auto get_layout() {
-            return std::to_array<Element>({ (get_element<Args>()) ... });
+            return std::to_array<Element>({ (get_element<Args>())... });
         }
     };
 }

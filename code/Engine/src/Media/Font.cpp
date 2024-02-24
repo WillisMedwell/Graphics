@@ -2,7 +2,9 @@
 
 #include <array>
 #include <iostream>
+#include <memory>
 #include <ranges>
+
 // #include <mdspan>
 
 #include <ft2build.h>
@@ -31,6 +33,55 @@ struct FreeType {
 static FreeType free_type {};
 
 namespace Media {
+    auto FontAtlas::operator=(FontAtlas&& other) noexcept -> FontAtlas& {
+        this->image = std::move(other.image);
+        this->columns = other.columns;
+        this->rows = other.rows;
+        this->glyph_width = other.glyph_width;
+        this->glyph_height = other.glyph_height;
+        return *this;
+    }
+
+    auto FontAtlas::init(Media::Font& font, uint32_t char_height_px) -> Utily::Result<void, Utily::Error> {
+        auto res = font.gen_image_atlas(char_height_px);
+        if (res.has_error()) {
+            return res.error();
+        }
+        *this = std::move(res.value());
+
+        return {};
+    }
+
+    auto FontAtlas::uv_coord_of_char(char a) const -> std::array<float, 4> {
+        constexpr auto drawble_chars = FontAtlasConstants::DRAWABLE_CHARS;
+
+        assert(drawble_chars.front() <= a && a <= drawble_chars.back() && "Must be a printable character");
+
+        const auto i = static_cast<int>(a - drawble_chars.front());
+
+        const float r = static_cast<float>(i / columns);
+        const float c = static_cast<float>(i % columns);
+
+        const float min_y = c / static_cast<float>(columns);
+        const float max_y = (c + 1) / static_cast<float>(columns);
+
+        const float min_x = r / static_cast<float>(rows);
+        const float max_x = (r + 1) / static_cast<float>(rows);
+
+        std::cout << a << '\n';
+        std::cout << i << '\n';
+        std::cout << rows << " " << columns << '\n';
+        std::cout << r << " " << c << '\n';
+        std::cout << min_x << " " << min_y << '\n';
+
+        return std::array {
+            min_x,
+            min_y,
+            max_x,
+            max_y,
+        };
+    }
+
     auto Font::init(std::vector<uint8_t>& encoded_ttf) noexcept -> Utily::Result<void, Utily::Error> {
         FT_Face ff = nullptr;
         if (auto error = FT_New_Memory_Face(free_type.library, encoded_ttf.data(), encoded_ttf.size(), 0, &ff); error) {
@@ -74,7 +125,7 @@ namespace Media {
         }
     };
 
-    auto Font::gen_image_atlas(uint32_t char_height_px) -> Utily::Result<std::tuple<Media::Image, int, int>, Utily::Error> {
+    auto Font::gen_image_atlas(uint32_t char_height_px) -> Utily::Result<FontAtlas, Utily::Error> {
         constexpr auto& drawable_chars = FontAtlasConstants::DRAWABLE_CHARS;
 
         // Validate and Scale FreeType Face.
@@ -112,7 +163,7 @@ namespace Media {
 
         const auto [atlas_glyphs_per_row, atlas_num_rows] = [](float glyph_width, float glyph_height, float num_glyphs_in_atlas) {
 #if 1 // generate most square shape by brute force.
-            auto [min_diff, min_x, min_y] = std::tuple{ std::numeric_limits<float>::max(), 0, num_glyphs_in_atlas };
+            auto [min_diff, min_x, min_y] = std::tuple { std::numeric_limits<float>::max(), 0, num_glyphs_in_atlas };
             for (float i = 1; i < num_glyphs_in_atlas; ++i) {
                 auto x = i;
                 auto y = num_glyphs_in_atlas / i;
@@ -159,9 +210,13 @@ namespace Media {
                 }
             }
         }
-        Media::Image image;
-        image.init_raw(std::move(atlas_buffer), atlas_img_width, atlas_img_height, ColourFormat::greyscale);
-        return std::tuple{ std::move(image), atlas_num_rows, atlas_glyphs_per_row };
+        FontAtlas font_atlas;
+        font_atlas.columns = atlas_glyphs_per_row;
+        font_atlas.rows = atlas_num_rows;
+        font_atlas.glyph_width = static_cast<int>(atlas_info.width);
+        font_atlas.glyph_height = static_cast<int>(atlas_info.height);
+        font_atlas.image.init_raw(std::move(atlas_buffer), atlas_img_width, atlas_img_height, ColourFormat::greyscale);
+        return font_atlas;
     }
 
     void Font::stop() noexcept {
@@ -173,5 +228,79 @@ namespace Media {
 
     Font::~Font() {
         stop();
+    }
+
+    auto FontMeshGenerator::generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> Model::Static {
+        auto is_not_printable = [](char c) {
+            return !(FontAtlasConstants::DRAWABLE_CHARS.front() <= c && c <= FontAtlasConstants::DRAWABLE_CHARS.front());
+        };
+        assert(std::any_of(str.begin(), str.end(), is_not_printable));
+
+        constexpr int max_chars = 500;
+        if (str.size() > max_chars) {
+            throw std::length_error("Exceeded maximum char capacity");
+        }
+
+        static std::array<Model::Vertex, max_chars* 4> vertices = {};
+        static std::array<Model::Index, max_chars* 6> indices = {};
+
+        const size_t vert_size = str.size() * 4;
+        const size_t indi_size = str.size() * 6;
+
+        Model::Vertex* v_ptr[] = {
+            vertices.data() + 0,
+            vertices.data() + 1,
+            vertices.data() + 2,
+            vertices.data() + 3
+        };
+        Model::Index* i_ptr[] = {
+            indices.data() + 0,
+            indices.data() + 1,
+            indices.data() + 2,
+            indices.data() + 3,
+            indices.data() + 4,
+            indices.data() + 5,
+        };
+
+        const float char_width = static_cast<float>(atlas.glyph_width) / static_cast<float>(atlas.glyph_height) * char_height;
+        const float y_min = bottom_left_pos.y;
+        const float y_max = y_min + char_height;
+
+#if 1
+        for (int i = 0; i < str.size(); ++i) {
+            char c = str[i];
+#else
+        for (auto [i, c] : str | std::views::enumerate) {
+#endif
+            const auto [uv_min_x, uv_min_y, uv_max_x, uv_max_y] = atlas.uv_coord_of_char(c);
+
+            const int v_offset = i * 4;
+            const int i_offset = i * 6;
+
+            const float x_min = char_width * i + bottom_left_pos.x;
+            const float x_max = x_min + char_width;
+
+            std::construct_at(v_ptr[0] + v_offset, glm::vec3(x_min, y_min, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_min_x, uv_min_y));
+            std::construct_at(v_ptr[1] + v_offset, glm::vec3(x_max, y_min, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_max_x, uv_min_y));
+            std::construct_at(v_ptr[2] + v_offset, glm::vec3(x_max, y_max, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_max_x, uv_max_y));
+            std::construct_at(v_ptr[3] + v_offset, glm::vec3(x_min, y_max, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_min_x, uv_max_y));
+
+            *(i_ptr[0] + i_offset) = v_offset + 0;
+            *(i_ptr[1] + i_offset) = v_offset + 1;
+            *(i_ptr[2] + i_offset) = v_offset + 2;
+            *(i_ptr[3] + i_offset) = v_offset + 2;
+            *(i_ptr[4] + i_offset) = v_offset + 3;
+            *(i_ptr[5] + i_offset) = v_offset + 0;
+        }
+        auto [data, vert, indi] = Utily::InlineArrays::alloc_copy(
+            std::span<Model::Vertex> { vertices.data(), vert_size },
+            std::span<Model::Index> { indices.data(), indi_size });
+
+        return Model::Static {
+            .axis_align_bounding_box = {},
+            .data = std::move(data),
+            .vertices = vert,
+            .indices = indi
+        };
     }
 }

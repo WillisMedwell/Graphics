@@ -30,13 +30,16 @@ namespace Io {
             break;
         case Inputs::MouseButton::button_right:
             mouse_state.button_right = static_cast<InputState::Keyboard>(action);
-            break; 
+            break;
         }
     }
 
     static void key_callback(GLFWwindow* window, int key, int scancode [[maybe_unused]], int action, int mods [[maybe_unused]]) {
         assert(window_inputs_lookup.contains(window));
-        window_inputs_lookup[window].key_states[key] = static_cast<InputState::Keyboard>(action);
+        uint32_t ukey = static_cast<uint32_t>(key);
+        if (ukey < GLFW_KEY_LAST) {
+            window_inputs_lookup[window].key_states[key] = static_cast<InputState::Keyboard>(action);
+        }
     }
 
     void InputManager::init(void* window) {
@@ -46,20 +49,19 @@ namespace Io {
         _window = window;
         GLFWwindow* glfw_window = reinterpret_cast<GLFWwindow*>(_window.value_or(nullptr));
         window_inputs_lookup[glfw_window] = WindowInputs {};
+
         glfwSetCursorPosCallback(glfw_window, mouse_position_callback);
         glfwSetMouseButtonCallback(glfw_window, mouse_button_callback);
-        for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; ++i) {
-            glfwSetKeyCallback(glfw_window, key_callback);
-        }
+        glfwSetKeyCallback(glfw_window, key_callback);
     }
     void InputManager::stop() {
         assert(_window != nullptr && "Probably not initalised");
         GLFWwindow* glfw_window = reinterpret_cast<GLFWwindow*>(_window.value_or(nullptr));
+
         glfwSetCursorPosCallback(glfw_window, nullptr);
         glfwSetMouseButtonCallback(glfw_window, nullptr);
-        for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; ++i) {
-            glfwSetKeyCallback(glfw_window, nullptr);
-        }
+        glfwSetKeyCallback(glfw_window, nullptr);
+
         window_inputs_lookup.erase(glfw_window);
         _window = std::nullopt;
     }

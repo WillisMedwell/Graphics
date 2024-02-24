@@ -3,10 +3,12 @@
 #include <Utily/Utily.hpp>
 
 #include "Media/Image.hpp"
+#include "Model/Static.hpp"
 #include <array>
 #include <glm/vec2.hpp>
 #include <limits>
 #include <ranges>
+#include <utility>
 
 namespace Media {
 
@@ -32,6 +34,30 @@ namespace Media {
         constexpr static auto IS_CHAR_DRAWABLE = gen_is_char_drawable_table();
     }
 
+    class Font;
+
+    class FontAtlas
+    {
+    public:
+        Media::Image image = {};
+        int32_t columns { 0 }, rows { 0 };
+        int32_t glyph_width { 0 }, glyph_height { 0 };
+
+        constexpr FontAtlas() = default;
+
+        // Allow move operations
+        FontAtlas(FontAtlas&& other) = default;
+        auto operator=(FontAtlas&& other) noexcept -> FontAtlas&;
+
+        // Refuse copy operations.
+        FontAtlas(const FontAtlas&) = delete;
+        FontAtlas& operator=(const FontAtlas&) = delete;
+
+        auto init(Media::Font& font, uint32_t char_height_px) -> Utily::Result<void, Utily::Error>;
+
+        auto uv_coord_of_char(char a) const -> std::array<float, 4>;
+    };
+
     class Font
     {
     public:
@@ -40,7 +66,7 @@ namespace Media {
         Font(Font&& other);
 
         [[nodiscard]] auto init(std::vector<uint8_t>& encoded_ttf) noexcept -> Utily::Result<void, Utily::Error>;
-        [[nodiscard]] auto gen_image_atlas(uint32_t char_height_px) -> Utily::Result<std::tuple<Media::Image, int, int>, Utily::Error>;
+        [[nodiscard]] auto gen_image_atlas(uint32_t char_height_px) -> Utily::Result<FontAtlas, Utily::Error>;
 
         void stop() noexcept;
 
@@ -50,4 +76,7 @@ namespace Media {
         void* _font_face = nullptr;
     };
 
+    namespace FontMeshGenerator {
+        auto generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> Model::Static;
+    }
 }

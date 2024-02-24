@@ -20,11 +20,15 @@ public:
     struct VertexArrayId {
         std::ptrdiff_t id;
     };
+    struct TextureId {
+        std::ptrdiff_t id;
+    };
 
     Utily::StaticVector<Renderer::Shader, 20> shaders;
     Utily::StaticVector<Renderer::VertexBuffer, 20> vertex_buffers;
     Utily::StaticVector<Renderer::IndexBuffer, 20> index_buffers;
     Utily::StaticVector<Renderer::VertexArray, 20> vertex_arrays;
+    Utily::StaticVector<Renderer::Texture, 100> textures;
     
     Renderer::ScreenFrameBuffer screen_frame_buffer;
 
@@ -52,11 +56,14 @@ public:
         vertex_buffers[vb_id.id].bind();
 
         constexpr static auto layout = vertex_buffer_layout.get_layout();
-        constexpr static auto stride = vertex_buffer_layout.get_stride();
+        /*constexpr static*/ auto stride = vertex_buffer_layout.get_stride();
 
         uint32_t offset = 0;
         for (size_t i = 0; i < layout.size(); i++) {
             const auto& element = layout[i];
+
+            std::cout << i << " -> " << element.count << " x " << element.type << ", " << element.normalised << " " << stride << " " << offset << " " << element.type_size << '\n';
+
 #if defined(CONFIG_TARGET_NATIVE)
             glEnableVertexArrayAttrib(va.get_id().value(), i);
             glVertexAttribPointer(i, element.count, element.type, element.normalised, stride, reinterpret_cast<const void*>(offset));
@@ -64,10 +71,13 @@ public:
             glEnableVertexAttribArray(i);
             glVertexAttribPointer(i, element.count, element.type, element.normalised, stride, reinterpret_cast<const void*>(offset));
 #endif
-            offset += element.count * element.type_size;
+
+            offset += element.type_size;
         }
         return 0;
     }    
+
+    [[nodiscard]] auto add_texture(Media::Image& image) noexcept -> Utily::Result<TextureId, Utily::Error>;
 
     void stop() noexcept;
 };

@@ -95,133 +95,60 @@ namespace Model {
         }
         return loaded_model;
     }
+
+    auto generate_plane(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d) -> Model::Static {
+        glm::vec3 normal = glm::normalize(glm::vec3(-1) * glm::cross(b - a, c - a));
+
+        std::array<Model::Vertex, 4> vertices = {
+            Model::Vertex { .position = a, .normal = normal, .uv_coord = glm::vec2(0.0f, 0.0f) },
+            Model::Vertex { .position = b, .normal = normal, .uv_coord = glm::vec2(1.0f, 0.0f) },
+            Model::Vertex { .position = c, .normal = normal, .uv_coord = glm::vec2(1.0f, 1.0f) },
+            Model::Vertex { .position = d, .normal = normal, .uv_coord = glm::vec2(0.0f, 1.0f) }
+        };
+        std::array<Model::Index, 6> indices = { 0, 1, 2, 2, 3, 0 };
+
+        auto [data, verts, indis] = Utily::InlineArrays::alloc_copy(vertices, indices);
+        return Model::Static {
+            .axis_align_bounding_box = {},
+            .data = std::move(data),
+            .vertices = verts,
+            .indices = indis
+        };
+    }
+
+    auto join(Static&& lhs, Static&& rhs) -> Model::Static {
+        const uint32_t index_offset = lhs.vertices.size();
+
+        auto [d, v, i] = Utily::InlineArrays::alloc_uninit<Model::Vertex, Model::Index>(
+            lhs.vertices.size() + rhs.vertices.size(),
+            lhs.indices.size() + rhs.indices.size());
+
+        { // copy the vertices.
+            auto iter = std::uninitialized_copy(lhs.vertices.begin(), lhs.vertices.end(), v.begin());
+            std::uninitialized_copy(rhs.vertices.begin(), rhs.vertices.end(), iter);
+        }
+        { // copy indices, adding the offset to the rhs
+            auto iter = std::uninitialized_copy(lhs.indices.begin(), lhs.indices.end(), i.begin());
+
+            for (const auto& i : rhs.indices) {
+                std::construct_at(&(*iter), i + index_offset);
+                ++iter;
+            }
+        }
+
+        lhs.data.reset();
+        lhs.vertices = {};
+        lhs.indices = {};
+
+        rhs.data.reset();
+        rhs.vertices = {};
+        rhs.indices = {};
+
+        return Model::Static {
+            .axis_align_bounding_box = {}, // TODO
+            .data = std::move(d),
+            .vertices = v,
+            .indices = i
+        };
+    }
 }
-
-// using namespace std::literals;
-
-// auto isModelFormatSupported(const std::string_view& extension) -> bool {
-//     static constexpr auto supported_model_extensions = std::to_array({ ".fbx"sv }); //,".gltf"sv });
-
-//     auto is_same_extension = [&](const auto& ext) {
-//         return extension == ext;
-//     };
-
-//     return std::ranges::any_of(supported_model_extensions, is_same_extension);
-// }
-
-// auto readRawFile(const std::filesystem::path& path) -> Utily::Result<std::vector<char>, Utily::Error> {
-//     if (!std::filesystem::exists(path)) {
-//         return Utily::Error("The file does not exist");
-//     }
-
-//     std::ifstream infile(path, std::ios::binary);
-
-//     if (!infile.is_open()) {
-//         return Utily::Error("The file is in use");
-//     }
-
-//     std::vector<char> raw_contents;
-
-//     infile.seekg(0, std::ios::end);
-//     raw_contents.resize(infile.tellg());
-//     infile.seekg(0, std::ios::beg);
-//     infile.read(raw_contents.data(), raw_contents.size());
-
-//     if (!infile.good()) {
-//         return Utily::Error("Error reading the file");
-//     }
-
-//     return raw_contents;
-// }
-
-// auto importAnimationData(Models::Staging::Model* model_ptr, std::span<aiAnimation*> assimp_animations) noexcept {
-//     Models::Staging::Model& model = *model_ptr;
-
-//     for (const auto& assimp_animation : assimp_animations) {
-
-//         const auto assimp_channels = std::span { assimp_animation->mChannels, assimp_animation->mNumChannels };
-//         const auto assimp_mesh_channels = std::span { assimp_animation->mMeshChannels, assimp_animation->mNumMeshChannels };
-//         const auto assimp_mesh_morph_channels = std::span { assimp_animation->mMorphMeshChannels, assimp_animation->mNumMorphMeshChannels };
-//     }
-// }
-
-// auto importMeshData(Models::Staging::Model* model_ptr, std::span<aiMesh*> assimp_meshes) noexcept {
-//     Models::Staging::Model& model = *model_ptr;
-
-//     for (const auto& assimp_mesh : assimp_meshes) {
-//         const auto assimp_vertices = std::span { assimp_mesh->mVertices, assimp_mesh->mNumVertices };
-//         const auto assimp_uv_coords = std::span { assimp_mesh->mTextureCoords[0], assimp_mesh->mNumVertices };
-//         const auto assimp_normals = std::span { assimp_mesh->mNormals, assimp_mesh->mNumVertices };
-
-//         for (const auto& [v, n, uv] : std::views::zip(assimp_vertices, assimp_normals, assimp_uv_coords)) {
-//             model.vertex_data.emplace_back(
-//                 Models::Staging::Vertex {
-//                     .position = { v.x, v.y, v.z },
-//                     .normal = { n.x, n.y, n.z },
-//                     .uv_coord = { uv.x, uv.y } });
-//         }
-
-//         const auto assimp_faces = std::span { assimp_mesh->mFaces, assimp_mesh->mNumFaces };
-
-//         for (const auto& assimp_face : assimp_faces) {
-//             for (const auto& index : std::span { assimp_face.mIndices, assimp_face.mNumIndices }) {
-//                 model.index_data.emplace_back(index);
-//             }
-//         }
-//     }
-// }
-
-// namespace Models::Staging {
-//     auto loadModel(const std::filesystem::path& path) -> Utily::Result<Staging::Model, Utily::Error> {
-//         const auto ext = path.extension().string();
-
-//         if (!isModelFormatSupported(ext)) {
-//             return Utily::Error {
-//                 std::format(
-//                     "Not going to load model \"{}\", the format is not supported.",
-//                     path.string())
-//             };
-//         }
-
-//         auto maybe_file_contents = readRawFile(path);
-
-//         if (maybe_file_contents.has_error()) {
-//             return Utily::Error {
-//                 std::format(
-//                     "Failed to load model \"{}\". The error was \"{}\".",
-//                     path.string(),
-//                     maybe_file_contents.error().what())
-//             };
-//         }
-//         const auto& file_contents = maybe_file_contents.value();
-
-//         Assimp::Importer importer {};
-
-//         const aiScene* assimp_scene = importer.ReadFileFromMemory(
-//             file_contents.data(),
-//             file_contents.size(),
-//             aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType,
-//             ext.c_str());
-
-//         if (assimp_scene == nullptr) {
-//             return Utily::Error {
-//                 std::format(
-//                     "Failed to load model \"{}\". The error was: \"{}\"",
-//                     path.string(),
-//                     importer.GetErrorString())
-//             };
-//         }
-
-//         Staging::Model model;
-
-//         auto assimp_meshes = std::span { assimp_scene->mMeshes, assimp_scene->mNumMeshes };
-//         auto assimp_animations = std::span { assimp_scene->mAnimations, assimp_scene->mNumAnimations };
-
-//         importMeshData(&model, assimp_meshes);
-//         importAnimationData(&model, assimp_animations);
-
-//         model.has_animations = false;
-
-//         return model;
-//     }
-// }

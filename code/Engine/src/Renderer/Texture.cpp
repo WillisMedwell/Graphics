@@ -48,7 +48,7 @@ namespace Renderer {
         }
         return {};
     }
-    
+
     auto Texture::upload_image(
         Media::Image& image,
         Filter filter,
@@ -70,11 +70,22 @@ namespace Renderer {
         if (auto br = bind(); br.has_error()) {
             return br.error();
         }
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (int32_t)filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (int32_t)filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_SRGB8_ALPHA8, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));
+
+
+        
+
+        if (colour_format == Media::ColourFormat::greyscale) {
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));
+        } else {
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+            glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_RGBA8, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));
+        }
 
         if (offload_image_on_success) {
             glFinish();
