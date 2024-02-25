@@ -27,6 +27,18 @@ namespace Model {
         using VBL = Renderer::VertexBufferLayout<glm::vec3, glm::vec3, glm::vec2>;
     };
 
+    struct Vertex2D {
+        Vec2 position;
+        Vec2 uv_coord;
+
+        friend auto operator<<(std::ostream& stream, const Vertex2D& vertex) -> std::ostream& {
+            stream << "v(" << vertex.position.x << ',' << vertex.position.y << ") \t"
+                   << "uv(" << vertex.uv_coord.x << ',' << vertex.uv_coord.y << ")";
+            return stream;
+        }
+        using VBL = Renderer::VertexBufferLayout<glm::vec2, glm::vec2>;
+    };
+
     struct BatchingVertex {
         Vec3 position;
         Vec3 normal;

@@ -1,5 +1,6 @@
 #include "Media/Font.hpp"
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 #include <memory>
@@ -52,7 +53,7 @@ namespace Media {
         return {};
     }
 
-    auto FontAtlas::uv_coord_of_char(char a) const -> std::array<float, 4> {
+    auto FontAtlas::uv_coord_of_char(char a) const -> FontAtlas::UvCoord {
         constexpr auto drawble_chars = FontAtlasConstants::DRAWABLE_CHARS;
 
         assert(drawble_chars.front() <= a && a <= drawble_chars.back() && "Must be a printable character");
@@ -62,23 +63,11 @@ namespace Media {
         const float r = static_cast<float>(i / columns);
         const float c = static_cast<float>(i % columns);
 
-        const float min_y = c / static_cast<float>(columns);
-        const float max_y = (c + 1) / static_cast<float>(columns);
-
-        const float min_x = r / static_cast<float>(rows);
-        const float max_x = (r + 1) / static_cast<float>(rows);
-
-        std::cout << a << '\n';
-        std::cout << i << '\n';
-        std::cout << rows << " " << columns << '\n';
-        std::cout << r << " " << c << '\n';
-        std::cout << min_x << " " << min_y << '\n';
-
-        return std::array {
-            min_x,
-            min_y,
-            max_x,
-            max_y,
+        return UvCoord {
+            .min_x = c / static_cast<float>(columns),
+            .max_x = (c + 1) / static_cast<float>(columns),
+            .min_y = 1 - (r + 1) / static_cast<float>(rows),
+            .max_y = 1 - r / static_cast<float>(rows),
         };
     }
 
@@ -92,35 +81,38 @@ namespace Media {
     }
 
     struct FreeTypeGlyph {
-        std::vector<uint8_t> buffer;
-        std::ptrdiff_t width, height, spanline;
+        std::vector<uint8_t> buffer = {};
+        std::ptrdiff_t width { 0 }, height { 0 }, spanline { 0 }, left_padding { 0 };
 
         constexpr FreeTypeGlyph() = default;
 
         constexpr FreeTypeGlyph(const FT_GlyphSlot& slot)
             : width(slot->bitmap.width)
             , height(slot->bitmap.rows)
-            , spanline(slot->bitmap_top) {
+            , spanline(slot->bitmap_top)
+            , left_padding(slot->bitmap_left) {
             auto buffer_data = std::span<uint8_t>(slot->bitmap.buffer, slot->bitmap.width * slot->bitmap.rows);
             buffer = std::vector<uint8_t> { buffer_data.begin(), buffer_data.end() };
         }
     };
 
     struct GlyphInfo {
-        std::ptrdiff_t width = 0, height = 0, spanline = 0;
+        std::ptrdiff_t width = 0, height = 0, spanline = 0, left_padding = 0;
 
         GlyphInfo() = default;
 
         GlyphInfo(const FT_GlyphSlot& slot)
             : width(slot->bitmap.width)
             , height(slot->bitmap.rows + slot->bitmap_top)
-            , spanline(slot->bitmap_top) { }
+            , spanline(slot->bitmap_top)
+            , left_padding(slot->bitmap_left) { }
 
         static auto take_max_values(const GlyphInfo& lhs, const GlyphInfo& rhs) -> GlyphInfo {
             GlyphInfo gi;
             gi.width = std::max(lhs.width, rhs.width);
             gi.height = std::max(lhs.height, rhs.height);
             gi.spanline = std::max(lhs.spanline, rhs.spanline);
+            gi.left_padding = std::max(lhs.left_padding, rhs.left_padding);
             return gi;
         }
     };
@@ -193,13 +185,14 @@ namespace Media {
         std::ranges::fill(atlas_buffer, (uint8_t)0);
 
         for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(drawable_chars.size()); ++i) {
+
             const auto& bitmap_ft = cached_ft_bitmaps[i];
             const auto atlas_coords = glm::ivec2 { i % atlas_glyphs_per_row, i / atlas_glyphs_per_row };
             const auto adjusted_offset = glm::ivec2 { atlas_coords.x * atlas_info.width, atlas_coords.y * atlas_info.height };
 
             auto get_atlas_buffer_dest = [&](int x, int y) -> uint8_t& {
                 const auto px_coords = glm::ivec2(adjusted_offset.x + x, adjusted_offset.y + y);
-                return atlas_buffer[px_coords.y * atlas_img_width + px_coords.x];
+                return atlas_buffer[px_coords.y * atlas_img_width + px_coords.x + bitmap_ft.left_padding];
             };
             for (std::ptrdiff_t y = 0; y < bitmap_ft.height; ++y) {
                 for (std::ptrdiff_t x = 0; x < bitmap_ft.width; ++x) {
@@ -230,24 +223,24 @@ namespace Media {
         stop();
     }
 
-    auto FontMeshGenerator::generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> Model::Static {
+    auto FontMeshGenerator::generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> std::tuple<std::array<Model::Vertex2D, 400>, std::array<Model::Index, 600>> {
         auto is_not_printable = [](char c) {
             return !(FontAtlasConstants::DRAWABLE_CHARS.front() <= c && c <= FontAtlasConstants::DRAWABLE_CHARS.front());
         };
         assert(std::any_of(str.begin(), str.end(), is_not_printable));
 
-        constexpr int max_chars = 500;
+        constexpr int max_chars = 100;
         if (str.size() > max_chars) {
             throw std::length_error("Exceeded maximum char capacity");
         }
 
-        static std::array<Model::Vertex, max_chars* 4> vertices = {};
+        static std::array<Model::Vertex2D, max_chars* 4> vertices = {};
         static std::array<Model::Index, max_chars* 6> indices = {};
 
         const size_t vert_size = str.size() * 4;
         const size_t indi_size = str.size() * 6;
 
-        Model::Vertex* v_ptr[] = {
+        Model::Vertex2D* v_ptr[] = {
             vertices.data() + 0,
             vertices.data() + 1,
             vertices.data() + 2,
@@ -272,7 +265,7 @@ namespace Media {
 #else
         for (auto [i, c] : str | std::views::enumerate) {
 #endif
-            const auto [uv_min_x, uv_min_y, uv_max_x, uv_max_y] = atlas.uv_coord_of_char(c);
+            const auto uv = atlas.uv_coord_of_char(c);
 
             const int v_offset = i * 4;
             const int i_offset = i * 6;
@@ -280,10 +273,10 @@ namespace Media {
             const float x_min = char_width * i + bottom_left_pos.x;
             const float x_max = x_min + char_width;
 
-            std::construct_at(v_ptr[0] + v_offset, glm::vec3(x_min, y_min, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_min_x, uv_min_y));
-            std::construct_at(v_ptr[1] + v_offset, glm::vec3(x_max, y_min, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_max_x, uv_min_y));
-            std::construct_at(v_ptr[2] + v_offset, glm::vec3(x_max, y_max, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_max_x, uv_max_y));
-            std::construct_at(v_ptr[3] + v_offset, glm::vec3(x_min, y_max, -1.0f), glm::vec3(0, 0, 1), glm::vec2(uv_min_x, uv_max_y));
+            std::construct_at(v_ptr[0] + v_offset, glm::vec2(x_min, y_min), glm::vec2(uv.min_x, uv.min_y));
+            std::construct_at(v_ptr[1] + v_offset, glm::vec2(x_max, y_min), glm::vec2(uv.max_x, uv.min_y));
+            std::construct_at(v_ptr[2] + v_offset, glm::vec2(x_max, y_max), glm::vec2(uv.max_x, uv.max_y));
+            std::construct_at(v_ptr[3] + v_offset, glm::vec2(x_min, y_max), glm::vec2(uv.min_x, uv.max_y));
 
             *(i_ptr[0] + i_offset) = v_offset + 0;
             *(i_ptr[1] + i_offset) = v_offset + 1;
@@ -292,15 +285,6 @@ namespace Media {
             *(i_ptr[4] + i_offset) = v_offset + 3;
             *(i_ptr[5] + i_offset) = v_offset + 0;
         }
-        auto [data, vert, indi] = Utily::InlineArrays::alloc_copy(
-            std::span<Model::Vertex> { vertices.data(), vert_size },
-            std::span<Model::Index> { indices.data(), indi_size });
-
-        return Model::Static {
-            .axis_align_bounding_box = {},
-            .data = std::move(data),
-            .vertices = vert,
-            .indices = indi
-        };
+        return std::tuple { vertices, indices };
     }
 }

@@ -288,84 +288,90 @@ struct SpinningTeapotLogic {
 
 struct FontData {
     std::chrono::steady_clock::time_point start_time;
-    glm::vec4 background_colour = { 0, 0, 0, 1.0f };
+    glm::vec4 background_colour = { 0.25f, 0.25f, 0.0f, 1.0f };
     Media::Font font;
-    Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 1)) };
+    Cameras::StationaryPerspective camera { glm::vec3(0, 0, -10), glm::normalize(glm::vec3(0, 0, 1)) };
 
     AppRenderer::ShaderId s_id;
     AppRenderer::IndexBufferId ib_id;
     AppRenderer::VertexBufferId vb_id;
     AppRenderer::VertexArrayId va_id;
+    AppRenderer::TextureId t_id;
 
     constexpr static std::string_view VERT =
         "precision highp float; "
         "uniform mat4 u_mvp;"
-        "layout(location = 0) in vec3 aPos;"
-        "layout(location = 1) in vec3 aNor;"
-        "layout(location = 2) in vec2 aUv;"
+        "layout(location = 0) in vec2 l_pos;"
+        "layout(location = 1) in vec2 l_uv;"
+        "out vec2 uv;"
         "void main() {"
-        "    gl_Position = u_mvp * vec4(aPos, 1.0);"
+        "    gl_Position = u_mvp * vec4(l_pos, -1.0, 1.0);"
+        "    uv = l_uv;"
         "}"sv;
     constexpr static std::string_view FRAG =
         "precision highp float; "
-        "uniform vec3 u_colour;"
+        "uniform sampler2D u_texture;"
         "out vec4 FragColor;"
+        "in vec2 uv;"
         "void main() {"
-        "    FragColor = vec4(u_colour, 1.0);"
+        "    vec2 uv_flipped = vec2(uv.x, 1.0f - uv.y);"
+        "    FragColor = vec4(texture(u_texture, uv_flipped).rrrr);"
         "}"sv;
 
     Media::FontAtlas font_atlas = {};
 };
 struct FontLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
+        auto report_error = [](Utily::Error& error) {
+            FAIL() << error.what();
+        };
+
+        auto ttf_raw = Utily::FileReader::load_entire_file("assets/RobotoMono.ttf").on_error(report_error).value();
+
+        data.font.init(ttf_raw);
+        data.font_atlas.init(data.font, 100).on_error(report_error);
+        data.font_atlas.image.save_to_disk("FontAtlasGeneration.png").on_error(report_error);
+
+        data.s_id = renderer.add_shader(data.VERT, data.FRAG).on_error(report_error).value();
+        data.ib_id = renderer.add_index_buffer().on_error(report_error).value();
+        data.vb_id = renderer.add_vertex_buffer().on_error(report_error).value();
+        data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id).on_error(report_error).value();
+        data.t_id = renderer.add_texture(data.font_atlas.image).on_error(report_error).value();
+
         data.start_time = std::chrono::high_resolution_clock::now();
-        auto ttf_raw = Utily::FileReader::load_entire_file("assets/RobotoMono.ttf");
-
-        auto e = data.font.init(ttf_raw.value());
-
-        data.font_atlas.init(data.font, 100);
-        data.font_atlas.image.save_to_disk("FontAtlasGeneration.png");
-
-        EXPECT_FALSE(ttf_raw.has_error());
-        EXPECT_FALSE(e.has_error());
-
-        data.s_id = renderer.add_shader(data.VERT, data.FRAG).value();
-        data.ib_id = renderer.add_index_buffer().value();
-        data.vb_id = renderer.add_vertex_buffer().value();
-        data.va_id = renderer.add_vertex_array(Model::Vertex::VBL {}, data.vb_id).value();
     }
     void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
         if (duration > std::chrono::seconds(1)) {
-            // state.should_close = true;
+            state.should_close = true;
         }
     }
     void draw(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
         renderer.screen_frame_buffer.clear(data.background_colour);
 
-        auto pm = data.camera.projection_matrix(1, 1);
+        auto pm = Cameras::Orthographic::projection_matrix(renderer.window_width, renderer.window_height);
 
         renderer.screen_frame_buffer.bind();
-        renderer.screen_frame_buffer.clear();
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
         Renderer::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
         Renderer::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
         Renderer::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
         Renderer::Shader& s = renderer.shaders[data.s_id.id];
+        Renderer::Texture& t = renderer.textures[data.t_id.id];
 
-        static auto str_model = Media::FontMeshGenerator::generate_static_mesh("hello world", 100, { 0, 0 }, data.font_atlas);
-
-
+        const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 100, { 50, 50 }, data.font_atlas);
 
         s.bind();
+
         s.set_uniform("u_mvp", pm);
-        s.set_uniform("u_colour", { 1.0f, 1.0f, 1.0f });
+        s.set_uniform("u_texture", static_cast<int>(t.bind().value()));
+
         va.bind();
         ib.bind();
         vb.bind();
-        ib.load_indices(str_model.indices);
-        vb.load_vertices(str_model.vertices);
+        ib.load_indices(indis);
+        vb.load_vertices(verts);
         glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
     }
     void stop() {

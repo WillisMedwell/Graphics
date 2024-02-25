@@ -39,6 +39,13 @@ namespace Media {
     class FontAtlas
     {
     public:
+        struct UvCoord {
+            float min_x;
+            float max_x;
+            float min_y;
+            float max_y;
+        };
+
         Media::Image image = {};
         int32_t columns { 0 }, rows { 0 };
         int32_t glyph_width { 0 }, glyph_height { 0 };
@@ -55,7 +62,7 @@ namespace Media {
 
         auto init(Media::Font& font, uint32_t char_height_px) -> Utily::Result<void, Utily::Error>;
 
-        auto uv_coord_of_char(char a) const -> std::array<float, 4>;
+        auto uv_coord_of_char(char a) const -> UvCoord;
     };
 
     class Font
@@ -77,6 +84,6 @@ namespace Media {
     };
 
     namespace FontMeshGenerator {
-        auto generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> Model::Static;
+        auto generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> std::tuple<std::array<Model::Vertex2D, 400>, std::array<Model::Index, 600>>;
     }
 }

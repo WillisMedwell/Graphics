@@ -355,17 +355,12 @@ struct FontData {
     constexpr static std::string_view VERT =
         "precision highp float; "
         "uniform mat4 u_mvp;"
-        "layout(location = 0) in vec3 aPos;"
-        "layout(location = 1) in vec3 aNor;"
-        "layout(location = 2) in vec2 aUv;"
-        "out vec3 pos;"
-        "out vec3 nor;"
+        "layout(location = 0) in vec2 l_pos;"
+        "layout(location = 1) in vec2 l_uv;"
         "out vec2 uv;"
         "void main() {"
-        "    gl_Position = u_mvp * vec4(aPos, 1.0);"
-        "    pos = aPos;"
-        "    nor = aNor;"
-        "    uv = aUv;"
+        "    gl_Position = u_mvp * vec4(l_pos, -1.0, 1.0);"
+        "    uv = l_uv;"
         "}"sv;
     constexpr static std::string_view FRAG =
         "precision highp float; "
@@ -392,7 +387,7 @@ struct FontLogic {
         data.s_id = renderer.add_shader(data.VERT, data.FRAG).on_error(print_then_quit).value();
         data.ib_id = renderer.add_index_buffer().on_error(print_then_quit).value();
         data.vb_id = renderer.add_vertex_buffer().on_error(print_then_quit).value();
-        data.va_id = renderer.add_vertex_array(Model::Vertex::VBL {}, data.vb_id).on_error(print_then_quit).value();
+        data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id).on_error(print_then_quit).value();
         data.t_id = renderer.add_texture(data.font_atlas.image).on_error(print_then_quit).value();
     }
     void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
@@ -417,7 +412,7 @@ struct FontLogic {
         Renderer::Shader& s = renderer.shaders[data.s_id.id];
         Renderer::Texture& t = renderer.textures[data.t_id.id];
 
-        static auto str_model = Media::FontMeshGenerator::generate_static_mesh("hello", 100, { 50, 50 }, data.font_atlas);
+        const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 100, { 50, 50 }, data.font_atlas);
 
         s.bind();
 
@@ -427,8 +422,8 @@ struct FontLogic {
         va.bind();
         ib.bind();
         vb.bind();
-        ib.load_indices(str_model.indices);
-        vb.load_vertices(str_model.vertices);
+        ib.load_indices(indis);
+        vb.load_vertices(verts);
         glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
     }
     void stop() {

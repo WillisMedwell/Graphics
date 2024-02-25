@@ -62,8 +62,6 @@ public:
         for (size_t i = 0; i < layout.size(); i++) {
             const auto& element = layout[i];
 
-            std::cout << i << " -> " << element.count << " x " << element.type << ", " << element.normalised << " " << stride << " " << offset << " " << element.type_size << '\n';
-
 #if defined(CONFIG_TARGET_NATIVE)
             glEnableVertexArrayAttrib(va.get_id().value(), i);
             glVertexAttribPointer(i, element.count, element.type, element.normalised, stride, reinterpret_cast<const void*>(offset));
