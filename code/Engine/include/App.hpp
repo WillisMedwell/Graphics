@@ -10,6 +10,7 @@
 #include <entt/entt.hpp>
 
 #include "Cameras/Cameras.hpp"
+#include "Profiler/Profiler.hpp"
 #include "Renderer/Renderer.hpp"
 
 #include "Io/Input.hpp"
@@ -53,27 +54,38 @@ private:
 
     Renderer::OpenglContext _context;
     bool _has_init = false;
+    bool _has_stopped = false;
     std::chrono::high_resolution_clock::time_point _last_update;
 
 public:
     auto init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> void {
+        Profiler::instance().switch_to_process(Utily::Reflection::get_type_name<AppLogic>());
+        Profiler::Timer timer("App::init()", { "App" });
+
         _context.init(app_name, width, height).on_error(Utily::ErrorHandler::print_then_quit);
         _ecs = entt::registry {};
         _logic.init(_renderer, _ecs, _data);
         _input.init(_context.unsafe_window_handle());
         _has_init = true;
+        _has_stopped = false;
     }
     auto stop() -> void {
-        _renderer.stop();
-        _logic.stop();
-        _context.stop();
+        if (!_has_stopped) {
+            Profiler::Timer timer("App::stop()", { "App" });
+            _renderer.stop();
+            _logic.stop();
+            _context.stop();
+        }
+        _has_stopped = true;
     }
     auto update() -> void {
+        Profiler::Timer timer("App::update()", { "App" });
         double dt = std::chrono::duration<double> { std::chrono::high_resolution_clock::now() - _last_update }.count();
         _logic.update(dt, _input, _state, _ecs, _data);
         _last_update = std::chrono::high_resolution_clock::now();
     }
     auto render() -> void {
+        Profiler::Timer timer("App::render()", { "App" });
         _renderer.window_width = _context.window_width;
         _renderer.window_height = _context.window_height;
         _logic.draw(_renderer, _ecs, _data);
@@ -81,6 +93,7 @@ public:
     }
 
     auto poll_events() -> void {
+        Profiler::Timer timer("App::poll_events()", { "App" });
         this->_context.poll_events();
     }
     auto is_running() -> bool {
@@ -98,10 +111,13 @@ void auto_run_app(std::string_view app_name = "Auto Running App", uint16_t width
     app.init(app_name, width, height);
 
 #if defined(CONFIG_TARGET_NATIVE)
-    while (app.is_running()) {
-        app.poll_events();
-        app.update();
-        app.render();
+    {
+        Profiler::Timer timer("App::main_loop()");
+        while (app.is_running()) {
+            app.poll_events();
+            app.update();
+            app.render();
+        }
     }
     app.stop();
 #elif defined(CONFIG_TARGET_WEB)

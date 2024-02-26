@@ -5,6 +5,8 @@
 #include <iostream>
 #include <tuple>
 
+#include "Profiler/Profiler.hpp"
+
 namespace Renderer {
     struct TextureUnit {
         Texture* texture = nullptr;
@@ -55,6 +57,8 @@ namespace Renderer {
         bool offload_image_on_success) noexcept
         -> Utily::Result<void, Utily::Error> {
 
+        Profiler::Timer timer("Renderer::Texture::upload_image()", {"rendering"});
+
         if (!_id) {
             if (auto ir = init(); ir.has_error()) {
                 return ir.error();
@@ -65,11 +69,12 @@ namespace Renderer {
         if (!ir.has_value()) {
             return Utily::Error { "Image has no data." };
         }
-        auto [img, width, height, colour_format] = ir.value();
 
+        auto [img, width, height, colour_format] = ir.value();
         if (auto br = bind(); br.has_error()) {
             return br.error();
         }
+        
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (int32_t)filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (int32_t)filter);
@@ -97,6 +102,7 @@ namespace Renderer {
     }
 
     auto Texture::bind(bool locked) noexcept -> Utily::Result<uint32_t, Utily::Error> {
+
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (_id.value_or(INVALID_TEXTURE_ID) == INVALID_TEXTURE_ID) {
                 return Utily::Error { "Trying to bind an texture that has not been initialised." };

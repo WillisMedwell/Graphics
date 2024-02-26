@@ -7,6 +7,8 @@
 
 #include <Utily/Utily.hpp>
 
+#include "Profiler/Profiler.hpp"
+
 #include "Config.hpp"
 
 namespace Renderer {
@@ -30,6 +32,8 @@ namespace Renderer {
             && std::contiguous_iterator<std::ranges::iterator_t<Range>>
             && std::ranges::sized_range<Range>
         void load_vertices(const Range& vertices) noexcept {
+            Profiler::Timer timer("Renderer::VertexBuffer::load_vertices", {"rendering"});
+
             this->bind();
             using Underlying = std::ranges::range_value_t<Range>;
             size_t size_in_bytes = vertices.size() * sizeof(Underlying);

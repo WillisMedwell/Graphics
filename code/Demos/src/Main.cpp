@@ -2,6 +2,7 @@
 #include "Components/Components.hpp"
 #include "Config.hpp"
 #include "Model/Model.hpp"
+#include "Profiler/Profiler.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -391,9 +392,10 @@ struct FontLogic {
         data.t_id = renderer.add_texture(data.font_atlas.image).on_error(print_then_quit).value();
     }
     void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
+
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
         if (duration > std::chrono::seconds(1)) {
-            // state.should_close = true;
+            state.should_close = true;
         }
     }
     void draw(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
@@ -424,9 +426,11 @@ struct FontLogic {
         vb.bind();
         ib.load_indices(indis);
         vb.load_vertices(verts);
+        
         glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
     }
     void stop() {
+
     }
 };
 

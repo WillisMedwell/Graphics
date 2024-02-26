@@ -28,7 +28,9 @@ namespace Config {
     // true == potential unsafe. Fencing is not default.
     // false == ensure the gpu texture is reading valid cpu image data. Enables fencing as default.
     constexpr static bool SKIP_IMAGE_TEXTURE_FENCING = false;
+    
 
+    constexpr static bool SKIP_PROFILE = false;
 }
 
 #if defined(EMSCRIPTEN)

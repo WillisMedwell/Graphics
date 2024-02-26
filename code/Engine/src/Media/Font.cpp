@@ -6,6 +6,8 @@
 #include <memory>
 #include <ranges>
 
+#include "Profiler/Profiler.hpp"
+
 // #include <mdspan>
 
 #include <ft2build.h>
@@ -15,6 +17,7 @@ struct FreeType {
     FT_Library library = nullptr;
 
     FreeType() {
+        Profiler::Timer timer("Font::FreeType() *library init*", { "freetype", "font", "init" });
         if (auto error = FT_Init_FreeType(&library); error) {
             const auto ft_err_msg = std::string_view { FT_Error_String(error) };
             std::cerr
@@ -118,6 +121,8 @@ namespace Media {
     };
 
     auto Font::gen_image_atlas(uint32_t char_height_px) -> Utily::Result<FontAtlas, Utily::Error> {
+        Profiler::Timer timer("Font::gen_image_atlas()", { "font", "loading" });
+
         constexpr auto& drawable_chars = FontAtlasConstants::DRAWABLE_CHARS;
 
         // Validate and Scale FreeType Face.
@@ -143,17 +148,23 @@ namespace Media {
         };
 
         auto cached_ft_bitmaps = std::array<FreeTypeGlyph, drawable_chars.size()> {};
-        // 1. Transform -> Generates and caches the freetype bitmaps & returns its glyph layout
-        // 2. Reduce    -> Calculate the maximum bounding glyph layout, so all characters have enough space in atlas.
-        auto atlas_info = std::transform_reduce(
-            drawable_chars.begin(),
-            drawable_chars.end(),
-            cached_ft_bitmaps.begin(),
-            GlyphInfo {},
-            &GlyphInfo::take_max_values,
-            generate_and_cache_ft_glyph);
+        GlyphInfo atlas_info = {};
+        {
+            Profiler::Timer timer("FT_Render_glyphs()");
+            // 1. Transform -> Generates and caches the freetype bitmaps & returns its glyph layout
+            // 2. Reduce    -> Calculate the maximum bounding glyph layout, so all characters have enough space in atlas.
+            atlas_info = std::transform_reduce(
+                drawable_chars.begin(),
+                drawable_chars.end(),
+                cached_ft_bitmaps.begin(),
+                GlyphInfo {},
+                &GlyphInfo::take_max_values,
+                generate_and_cache_ft_glyph);
+        }
+        Profiler::Timer blit_timer("blit_glyphs_into_altas()");
 
         const auto [atlas_glyphs_per_row, atlas_num_rows] = [](float glyph_width, float glyph_height, float num_glyphs_in_atlas) {
+
 #if 1 // generate most square shape by brute force.
             auto [min_diff, min_x, min_y] = std::tuple { std::numeric_limits<float>::max(), 0, num_glyphs_in_atlas };
             for (float i = 1; i < num_glyphs_in_atlas; ++i) {
@@ -181,11 +192,11 @@ namespace Media {
         const int atlas_img_height = atlas_info.height * atlas_num_rows;
         const int atlas_img_width = atlas_info.width * atlas_glyphs_per_row;
 
-        std::vector<uint8_t> atlas_buffer(atlas_img_height * atlas_img_width);
-        std::ranges::fill(atlas_buffer, (uint8_t)0);
+        std::vector<uint8_t> atlas_buffer;
+
+        atlas_buffer.resize(atlas_img_height * atlas_img_width, (uint8_t)0);
 
         for (std::ptrdiff_t i = 0; i < static_cast<std::ptrdiff_t>(drawable_chars.size()); ++i) {
-
             const auto& bitmap_ft = cached_ft_bitmaps[i];
             const auto atlas_coords = glm::ivec2 { i % atlas_glyphs_per_row, i / atlas_glyphs_per_row };
             const auto adjusted_offset = glm::ivec2 { atlas_coords.x * atlas_info.width, atlas_coords.y * atlas_info.height };
@@ -203,6 +214,7 @@ namespace Media {
                 }
             }
         }
+
         FontAtlas font_atlas;
         font_atlas.columns = atlas_glyphs_per_row;
         font_atlas.rows = atlas_num_rows;
@@ -224,6 +236,8 @@ namespace Media {
     }
 
     auto FontMeshGenerator::generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> std::tuple<std::array<Model::Vertex2D, 400>, std::array<Model::Index, 600>> {
+        Profiler::Timer timer("FontMeshGenerate::generate_static_mesh()");
+
         auto is_not_printable = [](char c) {
             return !(FontAtlasConstants::DRAWABLE_CHARS.front() <= c && c <= FontAtlasConstants::DRAWABLE_CHARS.front());
         };

@@ -5,6 +5,8 @@
 #include <cassert>
 #include <iostream>
 
+#include "Profiler/Profiler.hpp"
+
 using namespace std::literals;
 
 #ifdef CONFIG_TARGET_NATIVE
@@ -121,62 +123,82 @@ namespace Renderer {
 #endif
 
     auto OpenglContext::init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> Utily::Result<void, Utily::Error> {
+        Profiler::Timer timer("Renderer::OpenglContext::init()", { "OpenglContext" });
+
 #if defined(CONFIG_TARGET_NATIVE)
-        if (glfwInit() == GLFW_FALSE) {
-            return Utily::Error("GLFW3 failed to be initialised");
+        {
+            Profiler::Timer timer("glfwInit()");
+            if (glfwInit() == GLFW_FALSE) {
+                return Utily::Error("GLFW3 failed to be initialised");
+            }
         }
 
-        if (_window.has_value()) {
-            return {};
-        }
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_DEPTH_BITS, 24);
+        {
+            Profiler::Timer timer("glfwCreateWindow()");
+            if (_window.has_value()) {
+                return {};
+            }
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+            glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-        _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
-        if (!_window) {
-            return Utily::Error("GLFW3 failed to create a window");
+            _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
+            if (!_window) {
+                return Utily::Error("GLFW3 failed to create a window");
+            }
+            window_width = width;
+            window_height = height;
+            glfwMakeContextCurrent(*_window);
         }
-        window_width = width;
-        window_height = height;
-        glfwMakeContextCurrent(*_window);
 #elif defined(CONFIG_TARGET_WEB)
         if (g_window) {
             _window = g_window;
             return {};
         }
-        if (glfwInit() == GLFW_FALSE) {
-            return Utily::Error("GLFW3 failed to be initialised");
-        }
-        if (_window.has_value()) {
-            return {};
-        }
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-        _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
-        if (!_window) {
-            return Utily::Error("GLFW3 failed to create a window");
+        {
+            Profiler::Timer timer("glfwInit()");
+            if (glfwInit() == GLFW_FALSE) {
+                return Utily::Error("GLFW3 failed to be initialised");
+            }
         }
-        window_width = width;
-        window_height = height;
-        glfwMakeContextCurrent(*_window);
 
-        g_window = _window;
+        {
+            Profiler::Timer timer("glfwCreateWindow()");
+
+            if (_window.has_value()) {
+                return {};
+            }
+            glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+            glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
+            _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
+            if (!_window) {
+                return Utily::Error("GLFW3 failed to create a window");
+            }
+            window_width = width;
+            window_height = height;
+            glfwMakeContextCurrent(*_window);
+
+            g_window = _window;
+        }
 #endif
 
 #ifdef CONFIG_TARGET_NATIVE
-        glewExperimental = GL_TRUE;
-        if (glewInit() != GLEW_OK) {
-            return Utily::Error("Glew failed to be initialised");
-        }
-
-        if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::all) {
-            if (GLEW_ARB_debug_output) {
-                glEnable(GL_DEBUG_OUTPUT);
-                glDebugMessageCallback(openglDebugCallback, nullptr);
+        {
+            Profiler::Timer timer("glewInit()");
+            glewExperimental = GL_TRUE;
+            if (glewInit() != GLEW_OK) {
+                return Utily::Error("Glew failed to be initialised");
+            }
+            if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::all) {
+                if (GLEW_ARB_debug_output) {
+                    glEnable(GL_DEBUG_OUTPUT);
+                    glDebugMessageCallback(openglDebugCallback, nullptr);
+                }
             }
         }
 #endif
+
         glfwSetFramebufferSizeCallback(*_window, framebufferSizeCallback);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -186,8 +208,6 @@ namespace Renderer {
         glDepthFunc(GL_LESS);
 
         validate_window();
-
-        
 
         return {};
     }
@@ -199,20 +219,27 @@ namespace Renderer {
 
     void OpenglContext::stop() {
 #if defined(CONFIG_TARGET_NATIVE)
+        Profiler::Timer timer("Renderer::OpenglContext::stop()");
         if (_window) {
+            Profiler::Timer window_timer("glfwDestroyWindow()");
             glfwDestroyWindow(_window.value());
             _window = std::nullopt;
         }
+        Profiler::Timer glfw_timer("glfwTerminate()");
         glfwTerminate();
+
 #endif
     }
 
     void OpenglContext::swap_buffers() noexcept {
+        Profiler::Timer timer("OpenglContext::swap_buffers()", { "OpenglContext" });
         validate_window();
         glfwSwapBuffers(*_window);
     }
 
     void OpenglContext::poll_events() {
+        Profiler::Timer timer("OpenglContext::poll_events()", { "OpenglContext" });
+
         validate_window();
         int width, height;
         glfwGetWindowSize(*_window, &width, &height);

@@ -3,6 +3,7 @@
 #include <Utily/Utily.hpp>
 
 #include "Config.hpp"
+#include "Profiler/Profiler.hpp"
 
 namespace Renderer {
     class IndexBuffer
@@ -24,6 +25,8 @@ namespace Renderer {
             && std::same_as<std::ranges::range_value_t<Range>, uint32_t>
             && std::ranges::sized_range<Range>
         void load_indices(const Range& indices) noexcept {
+            Profiler::Timer timer("Renderer::IndexBuffer::load_indices", {"rendering"});
+            
             this->bind();
             size_t size_in_bytes = indices.size() * sizeof(uint32_t);
 #if defined(CONFIG_TARGET_NATIVE)

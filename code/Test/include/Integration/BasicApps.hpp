@@ -210,6 +210,7 @@ struct SpinningTeapotLogic {
         auto teapot_source = Utily::FileReader::load_entire_file("assets/teapot.obj")
                                  .on_error(print_pause_quit)
                                  .value();
+                                 
         auto teapot_model = std::move(Model::decode_as_static_model(teapot_source, { '.', 'o', 'b', 'j' })
                                           .on_error(print_pause_quit)
                                           .value());
@@ -412,11 +413,14 @@ void run_font_renderer() {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(a.href);
                 });
+                Profiler::instance().save_as_trace_event_json(Profiler::TRACE_FILE_NAME);
                 emscripten_cancel_main_loop();
             }
             st_app.poll_events();
             st_app.update();
             st_app.render();
+
+            
         },
         0,
         1);

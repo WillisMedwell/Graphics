@@ -1,5 +1,6 @@
 
 #include "Media/Image.hpp"
+#include "Profiler/Profiler.hpp"
 
 #include <format>
 #include <lodepng.h>
@@ -15,8 +16,7 @@ namespace Media {
         , _height(std::exchange(other._height, 0)) {
     }
 
-    Image& Image::operator=(Image&& other) noexcept
-    {
+    Image& Image::operator=(Image&& other) noexcept {
         if (_fence) {
             _fence.value().wait_for_sync();
         }
@@ -35,6 +35,8 @@ namespace Media {
         bool include_alpha_channel,
         bool is_gamma_corrected) noexcept
         -> Utily::Result<void, Utily::Error> {
+
+        Profiler::Timer timer("Media::Image::init()");
 
         if (_fence) {
             _fence->wait_for_sync();
@@ -72,6 +74,8 @@ namespace Media {
             }
         };
 
+        Profiler::Timer lode_timer("lodepng::decode()");
+
         [[maybe_unused]] auto has_error = lodepng::decode(_data, _width, _height, encoded_png, asLodeFormat(_format));
 
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
@@ -90,7 +94,9 @@ namespace Media {
     }
 
     void Image::init_raw(std::vector<uint8_t>&& raw_data, uint32_t width, uint32_t height, ColourFormat format) noexcept {
+        Profiler::Timer timer("Media::Image::init_raw()");
         if (_fence) {
+            Profiler::Timer fence_timer("Media::Image::fence::wait_for_sync()");
             _fence->wait_for_sync();
             _fence = std::nullopt;
         }
@@ -102,14 +108,22 @@ namespace Media {
 
     auto Image::save_to_disk(std::filesystem::path path) noexcept
         -> Utily::Result<void, Utily::Error> {
+        Profiler::Timer timer("Media::Image::save_to_disk()");
+
         std::vector<uint8_t> encoded;
         lodepng::State state;
         state.info_raw.colortype = LodePNGColorType::LCT_GREY;
-        if (auto error = lodepng::encode(encoded, _data, _width, _height, state); error) {
-            return Utily::Error { std::string("Image.save_to_disk() failed to be converted to png: ") + lodepng_error_text(error) };
+        {
+            Profiler::Timer timer("lodepng::encode()");
+            if (auto error = lodepng::encode(encoded, _data, _width, _height, state); error) {
+                return Utily::Error { std::string("Image.save_to_disk() failed to be converted to png: ") + lodepng_error_text(error) };
+            }
         }
-        if (auto error = lodepng::save_file(encoded, path.string()); error) {
-            return Utily::Error { std::string("Image.save_to_disk() failed to save: ") + lodepng_error_text(error) };
+        {
+            Profiler::Timer timer("lodepng::save_file()");
+            if (auto error = lodepng::save_file(encoded, path.string()); error) {
+                return Utily::Error { std::string("Image.save_to_disk() failed to save: ") + lodepng_error_text(error) };
+            }
         }
         return {};
     }

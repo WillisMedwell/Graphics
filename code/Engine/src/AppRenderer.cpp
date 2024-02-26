@@ -59,13 +59,11 @@ auto AppRenderer::add_texture(Media::Image& image) noexcept -> Utily::Result<Tex
     if (auto result = texture.upload_image(image, Renderer::Texture::Filter::smooth, false); result.has_error()) {
         return result.error();
     }
-
-
-
     return TextureId { static_cast<std::ptrdiff_t>(id) };
 }
 
 void AppRenderer::stop() noexcept {
+    Profiler::Timer("AppRenderer::stop()");
     // explicitly destroy, just in case the gl context closes first.
     shaders.resize(0);
     vertex_buffers.resize(0);

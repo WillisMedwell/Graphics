@@ -1,6 +1,7 @@
 #include "Renderer/Shader.hpp"
 
 #include "Config.hpp"
+#include "Profiler/Profiler.hpp"
 
 #include <format>
 
@@ -17,6 +18,7 @@ namespace Renderer {
     }
 
     auto Shader::compile_shader(Type type, const std::string_view& source) -> Utily::Result<uint32_t, Utily::Error> {
+        Profiler::Timer timer("Renderer::Shader::compile_shader()", {"rendering"});
         constexpr static auto shader_verison =
 #if defined(CONFIG_TARGET_NATIVE)
             "#version 330 core \n"sv;
@@ -32,6 +34,7 @@ namespace Renderer {
         const char* src = versioned_source.data();
 
         uint32_t shader = glCreateShader((int32_t)type);
+
         glShaderSource(shader, 1, &src, nullptr);
         glCompileShader(shader);
 
@@ -57,6 +60,7 @@ namespace Renderer {
     }
 
     auto Shader::init(const std::string_view& vert, const std::string_view& frag) -> Utily::Result<void, Utily::Error> {
+        Profiler::Timer timer("Renderer::Shader::init()", {"rendering"});
         if (_program_id) {
             return Utily::Error { "Trying to override in-use shader" };
         }
@@ -74,10 +78,13 @@ namespace Renderer {
             return fr.error();
         }
 
-        glAttachShader(_program_id.value(), vr.value());
-        glAttachShader(_program_id.value(), fr.value());
-        glLinkProgram(_program_id.value());
-        glValidateProgram(_program_id.value());
+        {
+            Profiler::Timer timer("glLinkProgram()", {"rendering"});
+            glAttachShader(_program_id.value(), vr.value());
+            glAttachShader(_program_id.value(), fr.value());
+            glLinkProgram(_program_id.value());
+            glValidateProgram(_program_id.value());
+        }
 
         glDeleteShader(vr.value());
         glDeleteShader(fr.value());
