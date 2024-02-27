@@ -1,13 +1,13 @@
-#include "Renderer/Texture.hpp"
-
+#include "Core/Texture.hpp"
+#include "Profiler/Profiler.hpp"
 #include "Config.hpp"
+
 #include <Utily/Utily.hpp>
 #include <iostream>
 #include <tuple>
 
-#include "Profiler/Profiler.hpp"
 
-namespace Renderer {
+namespace Core {
     struct TextureUnit {
         Texture* texture = nullptr;
         bool immutable = false;
@@ -57,7 +57,7 @@ namespace Renderer {
         bool offload_image_on_success) noexcept
         -> Utily::Result<void, Utily::Error> {
 
-        Profiler::Timer timer("Renderer::Texture::upload_image()", {"rendering"});
+        Profiler::Timer timer("Core::Texture::upload_image()", {"rendering"});
 
         if (!_id) {
             if (auto ir = init(); ir.has_error()) {
@@ -94,7 +94,7 @@ namespace Renderer {
             image.stop();
         }
         if constexpr (!Config::SKIP_IMAGE_TEXTURE_FENCING) {
-            auto fence = Renderer::Fence {};
+            auto fence = Core::Fence {};
             fence.init();
             image.add_fence(std::move(fence));
         }

@@ -1,4 +1,4 @@
-#include "Renderer/OpenglContext.hpp"
+#include "Core/OpenglContext.hpp"
 
 #include "Config.hpp"
 
@@ -109,7 +109,7 @@ static void framebufferSizeCallback(GLFWwindow* window [[maybe_unused]], int wid
     glViewport(0, 0, width, height);
 }
 
-namespace Renderer {
+namespace Core {
 
     void OpenglContext::validate_window() {
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
@@ -123,7 +123,7 @@ namespace Renderer {
 #endif
 
     auto OpenglContext::init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> Utily::Result<void, Utily::Error> {
-        Profiler::Timer timer("Renderer::OpenglContext::init()", { "OpenglContext" });
+        Profiler::Timer timer("Core::OpenglContext::init()", { "OpenglContext" });
 
 #if defined(CONFIG_TARGET_NATIVE)
         {
@@ -219,7 +219,7 @@ namespace Renderer {
 
     void OpenglContext::stop() {
 #if defined(CONFIG_TARGET_NATIVE)
-        Profiler::Timer timer("Renderer::OpenglContext::stop()");
+        Profiler::Timer timer("Core::OpenglContext::stop()");
         if (_window) {
             Profiler::Timer window_timer("glfwDestroyWindow()");
             glfwDestroyWindow(_window.value());

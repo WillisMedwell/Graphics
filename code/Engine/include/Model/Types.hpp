@@ -1,11 +1,13 @@
 #pragma once
 
-#include "Renderer/VertexBufferLayout.hpp"
-#include <array>
-#include <glm/ext/quaternion_common.hpp>
+#include "Core/VertexBufferLayout.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext/quaternion_common.hpp>
+
 #include <iostream>
+#include <array>
 
 namespace Model {
     using Vec2 = glm::vec2;
@@ -24,7 +26,7 @@ namespace Model {
                    << "uv(" << vertex.uv_coord.x << ',' << vertex.uv_coord.y << ")";
             return stream;
         }
-        using VBL = Renderer::VertexBufferLayout<glm::vec3, glm::vec3, glm::vec2>;
+        using VBL = Core::VertexBufferLayout<glm::vec3, glm::vec3, glm::vec2>;
     };
 
     struct Vertex2D {
@@ -36,7 +38,7 @@ namespace Model {
                    << "uv(" << vertex.uv_coord.x << ',' << vertex.uv_coord.y << ")";
             return stream;
         }
-        using VBL = Renderer::VertexBufferLayout<glm::vec2, glm::vec2>;
+        using VBL = Core::VertexBufferLayout<glm::vec2, glm::vec2>;
     };
 
     struct BatchingVertex {
@@ -56,7 +58,7 @@ namespace Model {
             return stream;
         }
 
-        using VBL = Renderer::VertexBufferLayout<glm::vec3, glm::vec3, glm::vec2, uint32_t, uint32_t>;
+        using VBL = Core::VertexBufferLayout<glm::vec3, glm::vec3, glm::vec2, uint32_t, uint32_t>;
     };
 
     using Index = uint32_t;

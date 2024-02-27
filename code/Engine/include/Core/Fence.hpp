@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Config.hpp"
+#include "../Config.hpp"
 #include "Profiler/Profiler.hpp"
 
 #include <optional>
 #include <utility>
 
-
-namespace Renderer {
+namespace Core {
     class Fence
     {
     public:
@@ -35,7 +34,7 @@ namespace Renderer {
             return false;
         }
         void wait_for_sync() {
-            Profiler::Timer("Renderer::Fence::wait_for_sync()");
+            Profiler::Timer("Core::Fence::wait_for_sync()");
             if (_id) {
                 glWaitSync(*_id, 0, GL_TIMEOUT_IGNORED);
                 glDeleteSync(*_id);

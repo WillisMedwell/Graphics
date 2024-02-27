@@ -5,10 +5,7 @@
 #include <iostream>
 #include <thread>
 
-#include <App.hpp>
-#include <AppAnalytics.hpp>
-#include <Components/Components.hpp>
-#include <Model/Model.hpp>
+#include <Engine.hpp>
 
 using namespace std::literals;
 
@@ -19,29 +16,8 @@ struct BackgroundColourData {
 struct BackgroundColourLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, BackgroundColourData& data) {
         data.start_time = std::chrono::high_resolution_clock::now();
-
-        constexpr auto vert =
-            "precision mediump float; "
-            "layout(location = 0) in vec3 aPos;"
-            "void main() {"
-            "    gl_Position = vec4(aPos, 1.0);"
-            "}"sv;
-
-        constexpr auto frag =
-            "precision mediump float; "
-            "out vec4 FragColor;  "
-            " void main()"
-            " {"
-            "     FragColor = vec4(1.0, 0.5, 0.2, 1.0); "
-            " }"sv;
-        using VBL = Renderer::VertexBufferLayout<float, uint32_t, glm::vec3>;
-
-        EXPECT_FALSE(renderer.add_shader(vert, frag).has_error());
-        EXPECT_FALSE(renderer.add_vertex_buffer().has_error());
-        EXPECT_FALSE(renderer.add_index_buffer().has_error());
-        EXPECT_FALSE(renderer.add_vertex_array(VBL {}, renderer.add_vertex_buffer().value()).has_error());
     }
-    void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, BackgroundColourData& data) {
+    void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, BackgroundColourData& data) {
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
 
@@ -121,13 +97,13 @@ struct SpinningSquareLogic {
                 data.ib_id = id;
             });
 
-        renderer.add_vertex_array(Renderer::VertexBufferLayout<glm::vec3> {}, data.vb_id)
+        renderer.add_vertex_array(Core::VertexBufferLayout<glm::vec3> {}, data.vb_id)
             .on_error(Utily::ErrorHandler::print_then_quit)
             .on_value([&](auto& id) {
                 data.va_id = id;
             });
     }
-    void update(double dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, SpinningSquareData& data) {
+    void update(double dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, SpinningSquareData& data) {
 
         data.angle = data.angle + data.ROTATIONS_PER_SECOND * 360.0 * dt;
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
@@ -142,10 +118,10 @@ struct SpinningSquareLogic {
         renderer.screen_frame_buffer.clear(data.BACKGROUND_COLOUR);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Renderer::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Renderer::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Renderer::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Renderer::Shader& s = renderer.shaders[data.s_id.id];
+        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
+        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
+        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
+        Core::Shader& s = renderer.shaders[data.s_id.id];
 
         auto pm = data.camera.projection_matrix(renderer.window_width, renderer.window_height);
         auto vm = data.camera.view_matrix();
@@ -242,7 +218,7 @@ struct SpinningTeapotLogic {
             });
         data.start_time = std::chrono::high_resolution_clock::now();
     }
-    void update(double dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
+    void update(double dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
         ecs.get<Components::Transform>(data.teapot).rotation = ecs.get<Components::Spinning>(data.teapot)
                                                                    .update(dt)
                                                                    .calc_quat();
@@ -267,10 +243,10 @@ struct SpinningTeapotLogic {
         renderer.screen_frame_buffer.clear();
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Renderer::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Renderer::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Renderer::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Renderer::Shader& s = renderer.shaders[data.s_id.id];
+        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
+        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
+        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
+        Core::Shader& s = renderer.shaders[data.s_id.id];
 
         s.bind();
         s.set_uniform("u_mvp", mvp);
@@ -341,7 +317,7 @@ struct FontLogic {
 
         data.start_time = std::chrono::high_resolution_clock::now();
     }
-    void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
+    void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
         if (duration > std::chrono::seconds(1)) {
             state.should_close = true;
@@ -355,11 +331,11 @@ struct FontLogic {
         renderer.screen_frame_buffer.bind();
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Renderer::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Renderer::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Renderer::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Renderer::Shader& s = renderer.shaders[data.s_id.id];
-        Renderer::Texture& t = renderer.textures[data.t_id.id];
+        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
+        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
+        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
+        Core::Shader& s = renderer.shaders[data.s_id.id];
+        Core::Texture& t = renderer.textures[data.t_id.id];
 
         const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 100, { 50, 50 }, data.font_atlas);
 

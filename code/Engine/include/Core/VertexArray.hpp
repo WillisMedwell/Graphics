@@ -6,14 +6,14 @@
 
 #include <Utily/Utily.hpp>
 
-namespace Renderer {
+namespace Core {
 
     class VertexArray
     {
     public:
         VertexArray() = default;
         VertexArray(const VertexArray&) = delete;
-        VertexArray(VertexArray&& other);
+        VertexArray(VertexArray&& other) noexcept;
 
         [[nodiscard]] auto init() noexcept -> Utily::Result<void, Utily::Error>;
         void stop() noexcept;

@@ -1,9 +1,9 @@
-#include "Io/Input.hpp"
+#include "Core/Input.hpp"
 
 #include <Renderer/Renderer.hpp>
 #include <Utily/Utily.hpp>
 
-namespace Io {
+namespace Core {
     struct WindowInputs {
         InputState::Mouse mouse_state;
         std::array<InputState::Keyboard, GLFW_KEY_LAST> key_states { InputState::Keyboard::released };

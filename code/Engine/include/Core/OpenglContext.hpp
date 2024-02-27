@@ -7,7 +7,7 @@
 
 #include <Utily/Utily.hpp>
 
-namespace Renderer {
+namespace Core {
     class OpenglContext
     {
     private:

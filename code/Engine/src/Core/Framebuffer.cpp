@@ -1,10 +1,10 @@
-#include "Renderer/FrameBuffer.hpp"
+#include "Core/FrameBuffer.hpp"
 
 #include <array>
 #include <utility>
 #include "Profiler/Profiler.hpp"
 
-namespace Renderer {
+namespace Core {
     constexpr static uint32_t INVALID_BUFFER_ID = 0;
 
     static FrameBuffer* last_bound = nullptr;
@@ -134,7 +134,7 @@ namespace Renderer {
     uint32_t ScreenFrameBuffer::height = 0;
 
     void ScreenFrameBuffer::clear(glm::vec4 colour) noexcept {
-        Profiler::Timer timer("Renderer::ScreenFrameBuffer::clear()", {"rendering"});
+        Profiler::Timer timer("Core::ScreenFrameBuffer::clear()", {"rendering"});
         ScreenFrameBuffer::bind();
         glClearColor(colour.x, colour.y, colour.z, colour.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -147,7 +147,7 @@ namespace Renderer {
     }
     void ScreenFrameBuffer::resize(uint32_t screen_width, uint32_t screen_height) noexcept {
         if (screen_width != ScreenFrameBuffer::width || screen_height != ScreenFrameBuffer::height) {
-            Profiler::Timer timer("Renderer::ScreenFrameBuffer::resize()", {"rendering"});
+            Profiler::Timer timer("Core::ScreenFrameBuffer::resize()", {"rendering"});
             ScreenFrameBuffer::bind();
             glViewport(0, 0, screen_width, screen_height);
             ScreenFrameBuffer::width = screen_width;

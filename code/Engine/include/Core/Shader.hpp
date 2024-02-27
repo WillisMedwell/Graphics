@@ -10,7 +10,7 @@
 
 #include "Config.hpp"
 
-namespace Renderer {
+namespace Core {
     class Shader
     {
     public:

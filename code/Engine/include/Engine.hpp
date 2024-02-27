@@ -1,6 +1,8 @@
 #pragma once
 
 #include "EnginePch.hpp"
-#include "App.hpp"
-#include "Components/Components.hpp"
+#include "Core/Core.hpp"
+#include "Media/Media.hpp"
 #include "Model/Model.hpp"
+#include "EntityComponents/EntityComponents.hpp"
+#include "App/App.hpp"

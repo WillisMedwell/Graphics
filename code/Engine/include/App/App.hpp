@@ -11,10 +11,9 @@
 
 #include "Cameras/Cameras.hpp"
 #include "Profiler/Profiler.hpp"
-#include "Renderer/Renderer.hpp"
+#include "Core/Renderer.hpp"
 
-#include "Io/Input.hpp"
-
+#include "Core/Input.hpp"
 #include "AppRenderer.hpp"
 
 #include <chrono>
@@ -25,7 +24,7 @@ struct AppState {
 };
 
 template <typename T, typename AppData>
-concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, const Io::InputManager& input, entt::registry& ecs) {
+concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, const Core::InputManager& input, entt::registry& ecs) {
     {
         t.init(renderer, ecs, data)
     } -> std::same_as<void>;
@@ -46,13 +45,13 @@ class App
 {
 private:
     AppState _state;
-    Io::InputManager _input;
+    Core::InputManager _input;
     AppRenderer _renderer;
     entt::registry _ecs;
     AppData _data;
     AppLogic _logic;
 
-    Renderer::OpenglContext _context;
+    Core::OpenglContext _context;
     bool _has_init = false;
     bool _has_stopped = false;
     std::chrono::high_resolution_clock::time_point _last_update;

@@ -1,14 +1,14 @@
-#include "Renderer/VertexArray.hpp"
+#include "Core/VertexArray.hpp"
 
 #include "Config.hpp"
 
-namespace Renderer {
+namespace Core {
     constexpr static uint32_t INVALID_ARRAY_OBJECT_ID = 0;
-    static VertexArray* last_bound = nullptr;
+    static VertexArray* last_bound_va = nullptr;
 
-    VertexArray::VertexArray(VertexArray&& other)
+    VertexArray::VertexArray(VertexArray&& other) noexcept
         : _id(std::exchange(other._id, std::nullopt)) {
-        last_bound = nullptr;
+        last_bound_va = nullptr;
     }
 
     auto VertexArray::init() noexcept -> Utily::Result<void, Utily::Error> {
@@ -29,8 +29,8 @@ namespace Renderer {
             glDeleteVertexArrays(1, &_id.value());
         }
         _id = std::nullopt;
-        if (last_bound == this) {
-            last_bound = nullptr;
+        if (last_bound_va == this) {
+            last_bound_va = nullptr;
         }
     }
 
@@ -41,9 +41,9 @@ namespace Renderer {
                 assert(false);
             }
         }
-        if (last_bound != this) {
+        if (last_bound_va != this) {
             glBindVertexArray(_id.value_or(INVALID_ARRAY_OBJECT_ID));
-            last_bound = this;
+            last_bound_va = this;
         }
     }
     void VertexArray::unbind() noexcept {
@@ -56,9 +56,9 @@ namespace Renderer {
             }
         }
 
-        if (last_bound != nullptr) {
+        if (last_bound_va != nullptr) {
             glBindVertexArray(0);
-            last_bound = nullptr;
+            last_bound_va = nullptr;
         }
     }
 

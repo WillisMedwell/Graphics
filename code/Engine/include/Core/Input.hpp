@@ -4,7 +4,7 @@
 #include "glm/vec2.hpp"
 #include <optional>
 
-namespace Io {
+namespace Core {
     namespace Inputs {
         enum class Keyboard {
             w = GLFW_KEY_W,

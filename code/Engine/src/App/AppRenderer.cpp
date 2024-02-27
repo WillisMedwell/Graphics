@@ -1,4 +1,4 @@
-#include "AppRenderer.hpp"
+#include "App/AppRenderer.hpp"
 
 #include <format>
 
@@ -56,7 +56,7 @@ auto AppRenderer::add_texture(Media::Image& image) noexcept -> Utily::Result<Tex
         return result.error();
     }
 
-    if (auto result = texture.upload_image(image, Renderer::Texture::Filter::smooth, false); result.has_error()) {
+    if (auto result = texture.upload_image(image, Core::Texture::Filter::smooth, false); result.has_error()) {
         return result.error();
     }
     return TextureId { static_cast<std::ptrdiff_t>(id) };

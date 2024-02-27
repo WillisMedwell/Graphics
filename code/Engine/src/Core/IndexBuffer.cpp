@@ -1,8 +1,8 @@
-#include "Renderer/IndexBuffer.hpp"
+#include "Core/IndexBuffer.hpp"
 
 #include <utility>
 
-namespace Renderer {
+namespace Core {
     constexpr static uint32_t INVALID_INDEX_BUFFER_ID = 0;
     static IndexBuffer* last_bound_ib = nullptr;
 

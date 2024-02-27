@@ -2,11 +2,11 @@
 
 #include <Utily/Utily.hpp>
 
-#include "Renderer/Fence.hpp"
-#include "Media/Media.hpp"
+#include "Core/Fence.hpp"
+#include "Media/Image.hpp"
 #include "Config.hpp"
 
-namespace Renderer {
+namespace Core {
 
     class Texture
     {

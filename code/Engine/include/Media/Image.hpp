@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Config.hpp"
-#include "Renderer/Fence.hpp"
+#include "../Config.hpp"
+#include "Core/Fence.hpp"
 
 #include <Utily/Utily.hpp>
 #include <cassert>
@@ -45,7 +45,7 @@ namespace Media {
 
         [[nodiscard]] auto data() noexcept -> std::optional<std::tuple<std::span<const uint8_t>, uint32_t, uint32_t, ColourFormat>>;
 
-        void add_fence(Renderer::Fence&& fence) noexcept;
+        void add_fence(Core::Fence&& fence) noexcept;
         ~Image();
 
         [[nodiscard]] inline auto width() const noexcept { return _width; }
@@ -56,6 +56,6 @@ namespace Media {
         std::vector<uint8_t> _data;
         Media::ColourFormat _format = Media::ColourFormat::rgb;
         uint32_t _width { 0 }, _height { 0 };
-        std::optional<Renderer::Fence> _fence;
+        std::optional<Core::Fence> _fence;
     };
 }

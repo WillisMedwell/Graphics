@@ -1,8 +1,8 @@
-#include "Renderer/VertexBuffer.hpp"
+#include "Core/VertexBuffer.hpp"
 
 #include <utility>
 
-namespace Renderer {
+namespace Core {
     constexpr static uint32_t INVALID_VERTEX_BUFFER_ID = 0;
     static VertexBuffer* last_bound_vb = nullptr;
 

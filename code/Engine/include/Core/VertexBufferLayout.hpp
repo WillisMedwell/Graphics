@@ -5,7 +5,7 @@
 #include <array>
 #include <concepts>
 
-namespace Renderer {
+namespace Core {
 
     template <typename T>
     concept isVec3f = requires(T t) {

@@ -146,8 +146,8 @@ namespace Media {
         };
     }
 
-    void Image::add_fence(Renderer::Fence&& fence) noexcept {
-        _fence.emplace(std::forward<Renderer::Fence>(fence));
+    void Image::add_fence(Core::Fence&& fence) noexcept {
+        _fence.emplace(std::forward<Core::Fence>(fence));
     }
 
     Image::~Image() {

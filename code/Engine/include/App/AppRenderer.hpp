@@ -2,7 +2,7 @@
 
 #include <Utily/Utily.hpp>
 
-#include "Renderer/Renderer.hpp"
+#include "Core/Core.hpp"
 
 class AppRenderer
 {
@@ -24,13 +24,13 @@ public:
         std::ptrdiff_t id;
     };
 
-    Utily::StaticVector<Renderer::Shader, 20> shaders;
-    Utily::StaticVector<Renderer::VertexBuffer, 20> vertex_buffers;
-    Utily::StaticVector<Renderer::IndexBuffer, 20> index_buffers;
-    Utily::StaticVector<Renderer::VertexArray, 20> vertex_arrays;
-    Utily::StaticVector<Renderer::Texture, 100> textures;
+    Utily::StaticVector<Core::Shader, 20> shaders;
+    Utily::StaticVector<Core::VertexBuffer, 20> vertex_buffers;
+    Utily::StaticVector<Core::IndexBuffer, 20> index_buffers;
+    Utily::StaticVector<Core::VertexArray, 20> vertex_arrays;
+    Utily::StaticVector<Core::Texture, 100> textures;
     
-    Renderer::ScreenFrameBuffer screen_frame_buffer;
+    Core::ScreenFrameBuffer screen_frame_buffer;
 
     float window_width;
     float window_height;
@@ -40,11 +40,11 @@ public:
     [[nodiscard]] auto add_index_buffer() noexcept -> Utily::Result<IndexBufferId, Utily::Error>;
 
     template <typename... Args>
-    [[nodiscard]] auto add_vertex_array(Renderer::VertexBufferLayout<Args...> vertex_buffer_layout, VertexBufferId vb_id) -> Utily::Result<VertexArrayId, Utily::Error> {
+    [[nodiscard]] auto add_vertex_array(Core::VertexBufferLayout<Args...> vertex_buffer_layout, VertexBufferId vb_id) -> Utily::Result<VertexArrayId, Utily::Error> {
         auto id = vertex_arrays.size();
         vertex_arrays.emplace_back();
 
-        Renderer::VertexArray& va = vertex_arrays[id];
+        Core::VertexArray& va = vertex_arrays[id];
         auto result = va.init();
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (result.has_error()) {

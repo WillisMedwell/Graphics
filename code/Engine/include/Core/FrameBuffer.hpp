@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <optional>
 
-namespace Renderer {
+namespace Core {
     class FrameBuffer
     {
     public:

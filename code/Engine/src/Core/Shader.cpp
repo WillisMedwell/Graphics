@@ -1,13 +1,13 @@
-#include "Renderer/Shader.hpp"
-
 #include "Config.hpp"
+#include "Core/Shader.hpp"
 #include "Profiler/Profiler.hpp"
+
 
 #include <format>
 
 using namespace std::literals;
 
-namespace Renderer {
+namespace Core {
 
     static Shader* last_bound_s = nullptr;
 
@@ -18,7 +18,7 @@ namespace Renderer {
     }
 
     auto Shader::compile_shader(Type type, const std::string_view& source) -> Utily::Result<uint32_t, Utily::Error> {
-        Profiler::Timer timer("Renderer::Shader::compile_shader()", {"rendering"});
+        Profiler::Timer timer("Core::Shader::compile_shader()", {"rendering"});
         constexpr static auto shader_verison =
 #if defined(CONFIG_TARGET_NATIVE)
             "#version 330 core \n"sv;
@@ -60,7 +60,7 @@ namespace Renderer {
     }
 
     auto Shader::init(const std::string_view& vert, const std::string_view& frag) -> Utily::Result<void, Utily::Error> {
-        Profiler::Timer timer("Renderer::Shader::init()", {"rendering"});
+        Profiler::Timer timer("Core::Shader::init()", {"rendering"});
         if (_program_id) {
             return Utily::Error { "Trying to override in-use shader" };
         }
@@ -209,4 +209,4 @@ namespace Renderer {
         stop();
     }
 
-} // namespace Renderer
+} // namespace Core

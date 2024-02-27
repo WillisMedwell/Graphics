@@ -3,7 +3,7 @@
 #include "Model/Model.hpp"
 #include "TestPch.hpp"
 
-#include <App.hpp>
+#include <App/App.hpp>
 #include <iostream>
 
 using namespace std::literals;

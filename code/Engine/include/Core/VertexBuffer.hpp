@@ -11,7 +11,7 @@
 
 #include "Config.hpp"
 
-namespace Renderer {
+namespace Core {
     class VertexBuffer
     {
     public:
@@ -32,7 +32,7 @@ namespace Renderer {
             && std::contiguous_iterator<std::ranges::iterator_t<Range>>
             && std::ranges::sized_range<Range>
         void load_vertices(const Range& vertices) noexcept {
-            Profiler::Timer timer("Renderer::VertexBuffer::load_vertices", {"rendering"});
+            Profiler::Timer timer("Core::VertexBuffer::load_vertices", {"rendering"});
 
             this->bind();
             using Underlying = std::ranges::range_value_t<Range>;

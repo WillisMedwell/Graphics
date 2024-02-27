@@ -1,14 +1,9 @@
-#include "App.hpp"
-#include "Components/Components.hpp"
-#include "Config.hpp"
-#include "Model/Model.hpp"
-#include "Profiler/Profiler.hpp"
-
 #include <chrono>
 #include <iostream>
 #include <span>
 #include <string_view>
 
+#include <Engine.hpp>
 #include <Utily/Utily.hpp>
 
 using namespace std::literals;
@@ -391,7 +386,7 @@ struct FontLogic {
         data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id).on_error(print_then_quit).value();
         data.t_id = renderer.add_texture(data.font_atlas.image).on_error(print_then_quit).value();
     }
-    void update(float dt, const Io::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
+    void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
         if (duration > std::chrono::seconds(1)) {
@@ -408,11 +403,11 @@ struct FontLogic {
         renderer.screen_frame_buffer.clear();
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Renderer::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Renderer::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Renderer::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Renderer::Shader& s = renderer.shaders[data.s_id.id];
-        Renderer::Texture& t = renderer.textures[data.t_id.id];
+        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
+        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
+        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
+        Core::Shader& s = renderer.shaders[data.s_id.id];
+        Core::Texture& t = renderer.textures[data.t_id.id];
 
         const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 100, { 50, 50 }, data.font_atlas);
 

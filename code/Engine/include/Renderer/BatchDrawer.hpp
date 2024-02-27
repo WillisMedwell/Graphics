@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Components/Components.hpp"
+#include "EntityComponents/EntityComponents.hpp"
 #include "Model/Static.hpp"
-#include "Renderer/IndexBuffer.hpp"
-#include "Renderer/Shader.hpp"
-#include "Renderer/Texture.hpp"
-#include "Renderer/VertexArray.hpp"
-#include "Renderer/VertexBuffer.hpp"
+#include "Core/IndexBuffer.hpp"
+#include "Core/Shader.hpp"
+#include "Core/Texture.hpp"
+#include "Core/VertexArray.hpp"
+#include "Core/VertexBuffer.hpp"
 
 #include <algorithm>
 #include <array>
@@ -29,10 +29,10 @@ namespace Renderer {
             // could use std::from_chars but that requires a rotate so no thanks.
             return result;
         }
-        using TexturedStaticModel = std::tuple<Model::Static&, Components::Transform&, Renderer::Texture&>;
+        using TexturedStaticModel = std::tuple<Model::Static&, Components::Transform&, Core::Texture&>;
 #if 1
         template <size_t N>
-        void batch(VertexBuffer& vb, IndexBuffer& ib, VertexArray& va, Shader& shader, std::array<TexturedStaticModel, N>& textured_models) {
+        void batch(Core::VertexBuffer& vb, Core::IndexBuffer& ib, Core::VertexArray& va, Core::Shader& shader, std::array<TexturedStaticModel, N>& textured_models) {
             static std::vector<Model::BatchingVertex> vertices_buffer;
             static std::vector<Model::Index> indices_buffer;
 
