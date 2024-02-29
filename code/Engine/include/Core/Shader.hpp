@@ -25,7 +25,9 @@ namespace Core {
         auto set_uniform(std::string_view uniform, int32_t value) noexcept -> Utily::Result<void, Utily::Error>;
         auto set_uniform(std::string_view uniform, float value) noexcept -> Utily::Result<void, Utily::Error>;
         auto set_uniform(std::string_view uniform, const glm::vec3& value) noexcept -> Utily::Result<void, Utily::Error>;
+        auto set_uniform(std::string_view uniform, const glm::vec4& value) noexcept -> Utily::Result<void, Utily::Error>;
         auto set_uniform(std::string_view uniform, const glm::mat4& value) noexcept -> Utily::Result<void, Utily::Error>;
+
 
         ~Shader();
 

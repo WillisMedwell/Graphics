@@ -4,15 +4,15 @@
 
 namespace Core {
     constexpr static uint32_t INVALID_INDEX_BUFFER_ID = 0;
-    static IndexBuffer* last_bound_ib = nullptr;
 
     IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept
         : _id(std::exchange(other._id, std::nullopt))
         , _count(std::exchange(other._count, 0)) {
-        last_bound_ib = nullptr;
     }
 
     auto IndexBuffer::init() noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::IndexBuffer", "init()");
+
         if (_id.has_value()) {
             return Utily::Error { "Trying to override in-use index buffer" };
         }
@@ -27,30 +27,30 @@ namespace Core {
     }
 
     void IndexBuffer::stop() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::IndexBuffer", "stop()");
+
         if (_id.value_or(INVALID_INDEX_BUFFER_ID) != INVALID_INDEX_BUFFER_ID) {
             glDeleteBuffers(1, &_id.value());
         }
         _id = std::nullopt;
         _count = 0;
-        if (last_bound_ib == this) {
-            last_bound_ib = nullptr;
-        }
     }
 
     void IndexBuffer::bind() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::IndexBuffer", "bind()");
+
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (_id.value_or(INVALID_INDEX_BUFFER_ID) == INVALID_INDEX_BUFFER_ID) {
                 std::cerr << "Trying to unbind invalid vertex buffer.";
                 assert(false);
             }
         }
-        if (last_bound_ib != this) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _id.value_or(INVALID_INDEX_BUFFER_ID));
-            last_bound_ib = this;
-        }
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _id.value_or(INVALID_INDEX_BUFFER_ID));
     }
 
     void IndexBuffer::unbind() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::IndexBuffer", "unbind()");
+
         if constexpr (Config::SKIP_UNBINDING) {
             return;
         } else if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
@@ -59,11 +59,7 @@ namespace Core {
                 assert(false);
             }
         }
-
-        if (last_bound_ib != nullptr) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-            last_bound_ib = nullptr;
-        }
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
 }

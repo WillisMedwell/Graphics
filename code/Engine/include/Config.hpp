@@ -29,8 +29,9 @@ namespace Config {
     // false == ensure the gpu texture is reading valid cpu image data. Enables fencing as default.
     constexpr static bool SKIP_IMAGE_TEXTURE_FENCING = false;
     
-
     constexpr static bool SKIP_PROFILE = false;
+
+    constexpr static bool ENABLE_VSYNC = false;
 }
 
 #if defined(EMSCRIPTEN)

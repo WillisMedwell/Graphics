@@ -1,4 +1,5 @@
 #include "Core/VertexBuffer.hpp"
+#include "Core/DebugOpRecorder.hpp"
 
 #include <utility>
 
@@ -12,6 +13,8 @@ namespace Core {
     }
 
     auto VertexBuffer::init() noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::VertexBuffer", "init()");
+
         if (_id) {
             return Utily::Error { "Trying to override in-use vertex buffer" };
         }
@@ -25,6 +28,8 @@ namespace Core {
     }
 
     void VertexBuffer::stop() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::VertexBuffer", "stop()");
+
         if (_id.value_or(INVALID_VERTEX_BUFFER_ID) != INVALID_VERTEX_BUFFER_ID) {
             glDeleteBuffers(1, &_id.value());
         }
@@ -36,6 +41,8 @@ namespace Core {
     }
 
     void VertexBuffer::bind() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::VertexBuffer", "bind()");
+
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (_id.value_or(INVALID_VERTEX_BUFFER_ID) == INVALID_VERTEX_BUFFER_ID) {
                 std::cerr << "Trying to bind invalid vertex buffer.";
@@ -48,6 +55,8 @@ namespace Core {
         }
     }
     void VertexBuffer::unbind() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::VertexBuffer", "unbind()");
+
         if constexpr (Config::SKIP_UNBINDING) {
             return;
         } else if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {

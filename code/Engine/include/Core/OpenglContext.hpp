@@ -7,6 +7,9 @@
 
 #include <Utily/Utily.hpp>
 
+#include "Core/DebugOpRecorder.hpp"
+
+
 namespace Core {
     class OpenglContext
     {

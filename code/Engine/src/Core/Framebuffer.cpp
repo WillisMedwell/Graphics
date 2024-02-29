@@ -1,13 +1,11 @@
 #include "Core/FrameBuffer.hpp"
 
+#include "Profiler/Profiler.hpp"
 #include <array>
 #include <utility>
-#include "Profiler/Profiler.hpp"
 
 namespace Core {
     constexpr static uint32_t INVALID_BUFFER_ID = 0;
-
-    static FrameBuffer* last_bound = nullptr;
 
     struct ColourAttachment {
         std::optional<uint32_t> id = std::nullopt;
@@ -42,7 +40,6 @@ namespace Core {
     FrameBuffer::FrameBuffer(FrameBuffer&& other) noexcept
         : _id(std::exchange(other._id, std::nullopt))
         , _colour_attachment_index(std::exchange(other._id, std::nullopt)) {
-        last_bound = nullptr;
     }
 
     auto FrameBuffer::init(uint32_t width, uint32_t height) noexcept -> Utily::Result<void, Utily::Error> {
@@ -91,10 +88,6 @@ namespace Core {
             && _colour_attachment_index.value() < colour_attachments.size()) {
             colour_attachments[*_colour_attachment_index].in_use = false;
         }
-
-        if (last_bound == this) {
-            last_bound = this;
-        }
     }
 
     FrameBuffer::~FrameBuffer() noexcept {
@@ -108,10 +101,8 @@ namespace Core {
                 assert(false);
             }
         }
-        if (last_bound != this) {
-            glBindFramebuffer(GL_FRAMEBUFFER, _id.value_or(INVALID_BUFFER_ID));
-            last_bound = this;
-        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, _id.value_or(INVALID_BUFFER_ID));
     }
 
     void FrameBuffer::unbind() noexcept {
@@ -124,30 +115,24 @@ namespace Core {
             }
         }
 
-        if (last_bound != nullptr) {
-            glBindBuffer(GL_FRAMEBUFFER, 0);
-            last_bound = nullptr;
-        }
+        glBindBuffer(GL_FRAMEBUFFER, 0);
     }
 
     uint32_t ScreenFrameBuffer::width = 0;
     uint32_t ScreenFrameBuffer::height = 0;
 
     void ScreenFrameBuffer::clear(glm::vec4 colour) noexcept {
-        Profiler::Timer timer("Core::ScreenFrameBuffer::clear()", {"rendering"});
+        Profiler::Timer timer("Core::ScreenFrameBuffer::clear()", { "rendering" });
         ScreenFrameBuffer::bind();
         glClearColor(colour.x, colour.y, colour.z, colour.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
     void ScreenFrameBuffer::bind() noexcept {
-        if (last_bound != nullptr) {
-            glBindBuffer(GL_FRAMEBUFFER, 0);
-            last_bound = nullptr;
-        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
     void ScreenFrameBuffer::resize(uint32_t screen_width, uint32_t screen_height) noexcept {
         if (screen_width != ScreenFrameBuffer::width || screen_height != ScreenFrameBuffer::height) {
-            Profiler::Timer timer("Core::ScreenFrameBuffer::resize()", {"rendering"});
+            Profiler::Timer timer("Core::ScreenFrameBuffer::resize()", { "rendering" });
             ScreenFrameBuffer::bind();
             glViewport(0, 0, screen_width, screen_height);
             ScreenFrameBuffer::width = screen_width;

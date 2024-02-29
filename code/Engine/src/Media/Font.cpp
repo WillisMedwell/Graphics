@@ -106,7 +106,7 @@ namespace Media {
 
         GlyphInfo(const FT_GlyphSlot& slot)
             : width(slot->bitmap.width)
-            , height(slot->bitmap.rows + slot->bitmap_top)
+            , height(slot->bitmap.rows + 1)
             , spanline(slot->bitmap_top)
             , left_padding(slot->bitmap_left) { }
 

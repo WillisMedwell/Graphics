@@ -1,24 +1,23 @@
-#include "Config.hpp"
 #include "Core/Shader.hpp"
-#include "Profiler/Profiler.hpp"
+#include "Config.hpp"
+#include "Core/DebugOpRecorder.hpp"
 
+#include "Profiler/Profiler.hpp"
 
 #include <format>
 
 using namespace std::literals;
 
 namespace Core {
-
-    static Shader* last_bound_s = nullptr;
-
     Shader::Shader(Shader&& other)
         : _program_id(std::exchange(other._program_id, std::nullopt))
         , _cached_uniforms(std::move(other._cached_uniforms)) {
-        last_bound_s = nullptr;
     }
 
     auto Shader::compile_shader(Type type, const std::string_view& source) -> Utily::Result<uint32_t, Utily::Error> {
-        Profiler::Timer timer("Core::Shader::compile_shader()", {"rendering"});
+        Profiler::Timer timer("Core::Shader::compile_shader()", { "rendering" });
+        Core::DebugOpRecorder::instance().push("Core::Shader", "compile_shader()");
+
         constexpr static auto shader_verison =
 #if defined(CONFIG_TARGET_NATIVE)
             "#version 330 core \n"sv;
@@ -60,7 +59,8 @@ namespace Core {
     }
 
     auto Shader::init(const std::string_view& vert, const std::string_view& frag) -> Utily::Result<void, Utily::Error> {
-        Profiler::Timer timer("Core::Shader::init()", {"rendering"});
+        Core::DebugOpRecorder::instance().push("Core::Shader", "init()");
+        Profiler::Timer timer("Core::Shader::init()", { "rendering" });
         if (_program_id) {
             return Utily::Error { "Trying to override in-use shader" };
         }
@@ -79,7 +79,7 @@ namespace Core {
         }
 
         {
-            Profiler::Timer timer("glLinkProgram()", {"rendering"});
+            Profiler::Timer timer("glLinkProgram()", { "rendering" });
             glAttachShader(_program_id.value(), vr.value());
             glAttachShader(_program_id.value(), fr.value());
             glLinkProgram(_program_id.value());
@@ -117,18 +117,19 @@ namespace Core {
     // cache it so we dont query the GPU over already bound stuff.
 
     void Shader::bind() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "bind()");
+
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (!_program_id.has_value()) {
                 std::cerr << "Trying to use invalid program";
                 assert(_program_id.has_value());
             }
         }
-        if (last_bound_s != this) {
-            last_bound_s = this;
-        }
         glUseProgram(_program_id.value());
     }
     void Shader::unbind() noexcept {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "unbind()");
+
         if constexpr (Config::SKIP_UNBINDING) {
             return;
         } else if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
@@ -138,24 +139,22 @@ namespace Core {
             }
         }
 
-        if (last_bound_s != this && last_bound_s != nullptr) {
-            glUseProgram(0);
-            last_bound_s = nullptr;
-        }
+        glUseProgram(0);
     }
     void Shader::stop() {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "stop()");
+
         if (_program_id) {
             _cached_uniforms.clear();
             glDeleteProgram(*_program_id);
             _program_id = std::nullopt;
         }
-        if (last_bound_s == this) {
-            last_bound_s = nullptr;
-        }
     }
 
     // Assumes shader is bound already.
     auto Shader::get_uniform(const std::string_view uniform) noexcept -> Utily::Result<Uniform, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "get_uniform()");
+
         size_t uniform_hash = std::hash<std::string_view> {}(uniform);
         Uniform& ul = _cached_uniforms[uniform_hash];
 
@@ -169,6 +168,7 @@ namespace Core {
     }
 
     auto Shader::set_uniform(std::string_view uniform, int32_t value) noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "get_uniform<int32_t>()");
         bind();
         auto maybe_uniform = get_uniform(uniform);
         if (maybe_uniform.has_error()) {
@@ -178,6 +178,7 @@ namespace Core {
         return {};
     }
     auto Shader::set_uniform(std::string_view uniform, float value) noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "get_uniform<float>()");
         bind();
         auto maybe_uniform = get_uniform(uniform);
         if (maybe_uniform.has_error()) {
@@ -187,6 +188,7 @@ namespace Core {
         return {};
     }
     auto Shader::set_uniform(std::string_view uniform, const glm::vec3& value) noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "get_uniform<glm::vec3>()");
         bind();
         auto maybe_uniform = get_uniform(uniform);
         if (maybe_uniform.has_error()) {
@@ -195,7 +197,18 @@ namespace Core {
         glUniform3f(maybe_uniform.value().location, value.x, value.y, value.z);
         return {};
     }
+    auto Shader::set_uniform(std::string_view uniform, const glm::vec4& value) noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "get_uniform<glm::vec3>()");
+        bind();
+        auto maybe_uniform = get_uniform(uniform);
+        if (maybe_uniform.has_error()) {
+            return maybe_uniform.error();
+        }
+        glUniform4f(maybe_uniform.value().location, value.x, value.y, value.z, value.w);
+        return {};
+    }
     auto Shader::set_uniform(std::string_view uniform, const glm::mat4& value) noexcept -> Utily::Result<void, Utily::Error> {
+        Core::DebugOpRecorder::instance().push("Core::Shader", "get_uniform<glm:mat4>()");
         bind();
         auto maybe_uniform = get_uniform(uniform);
         if (maybe_uniform.has_error()) {

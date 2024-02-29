@@ -8,6 +8,7 @@
 #include <Utily/Utily.hpp>
 
 #include "Profiler/Profiler.hpp"
+#include "Core/DebugOpRecorder.hpp"
 
 #include "Config.hpp"
 
@@ -33,6 +34,7 @@ namespace Core {
             && std::ranges::sized_range<Range>
         void load_vertices(const Range& vertices) noexcept {
             Profiler::Timer timer("Core::VertexBuffer::load_vertices", {"rendering"});
+            Core::DebugOpRecorder::instance().push("Core::VertexBuffer", "load_vertices()");
 
             this->bind();
             using Underlying = std::ranges::range_value_t<Range>;

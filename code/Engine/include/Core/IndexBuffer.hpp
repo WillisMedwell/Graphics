@@ -3,7 +3,10 @@
 #include <Utily/Utily.hpp>
 
 #include "Config.hpp"
+#include "Model/Types.hpp"
 #include "Profiler/Profiler.hpp"
+#include "Core/DebugOpRecorder.hpp"
+
 
 namespace Core {
     class IndexBuffer
@@ -25,16 +28,12 @@ namespace Core {
             && std::same_as<std::ranges::range_value_t<Range>, uint32_t>
             && std::ranges::sized_range<Range>
         void load_indices(const Range& indices) noexcept {
-            Profiler::Timer timer("Core::IndexBuffer::load_indices", {"rendering"});
+            Core::DebugOpRecorder::instance().push("Core::IndexBuffer", "load_indices()");
+            Profiler::Timer timer("Core::IndexBuffer::load_indices", { "rendering" });
             
             this->bind();
-            size_t size_in_bytes = indices.size() * sizeof(uint32_t);
-#if defined(CONFIG_TARGET_NATIVE)
+            size_t size_in_bytes = indices.size() * sizeof(Model::Index);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, &(*indices.begin()), GL_DYNAMIC_DRAW);
-#elif defined(CONFIG_TARGET_WEB)
-            // for some reason, GL_DYNAMIC_DRAW has a very small buffer capacity.
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, size_in_bytes, &(*indices.begin()), GL_STATIC_DRAW);
-#endif
             _count = indices.size();
         }
 

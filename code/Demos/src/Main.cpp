@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include <Engine.hpp>
+#include <Renderer/Renderer.hpp>
 #include <Utily/Utily.hpp>
 
 using namespace std::literals;
@@ -338,37 +339,14 @@ struct SpinningTeapotLogic {
 
 struct FontData {
     std::chrono::steady_clock::time_point start_time;
-    glm::vec4 background_colour = { 0, 0, 0, 1.0f };
-    Media::Font font;
-    Cameras::StationaryPerspective camera { glm::vec3(0, 0, -10), glm::normalize(glm::vec3(0, 0, 1)) };
+    glm::vec4 background_colour = { 1.0f, 0, 1.0f, 1.0f };
 
-    AppRenderer::ShaderId s_id;
-    AppRenderer::IndexBufferId ib_id;
-    AppRenderer::VertexBufferId vb_id;
-    AppRenderer::VertexArrayId va_id;
-    AppRenderer::TextureId t_id;
+    Media::Font font {};
+    Media::FontAtlas font_atlas {};
 
-    constexpr static std::string_view VERT =
-        "precision highp float; "
-        "uniform mat4 u_mvp;"
-        "layout(location = 0) in vec2 l_pos;"
-        "layout(location = 1) in vec2 l_uv;"
-        "out vec2 uv;"
-        "void main() {"
-        "    gl_Position = u_mvp * vec4(l_pos, -1.0, 1.0);"
-        "    uv = l_uv;"
-        "}"sv;
-    constexpr static std::string_view FRAG =
-        "precision highp float; "
-        "uniform sampler2D u_texture;"
-        "out vec4 FragColor;"
-        "in vec2 uv;"
-        "void main() {"
-        "    vec2 uv_flipped = vec2(uv.x, 1 - uv.y);"
-        "    FragColor = vec4(texture(u_texture, uv_flipped).rrr, 1);"
-        "}"sv;
-
-    Media::FontAtlas font_atlas = {};
+    Renderer::ResourceManager resource_manager {};
+    Renderer::FontRenderer font_renderer {};
+    Renderer::FontBatchRenderer font_batch_renderer {};
 };
 struct FontLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
@@ -379,53 +357,72 @@ struct FontLogic {
 
         data.font_atlas.init(data.font, 100).on_error(print_then_quit);
         data.font_atlas.image.save_to_disk("FontAtlasGeneration.png").on_error(print_then_quit);
-
-        data.s_id = renderer.add_shader(data.VERT, data.FRAG).on_error(print_then_quit).value();
-        data.ib_id = renderer.add_index_buffer().on_error(print_then_quit).value();
-        data.vb_id = renderer.add_vertex_buffer().on_error(print_then_quit).value();
-        data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id).on_error(print_then_quit).value();
-        data.t_id = renderer.add_texture(data.font_atlas.image).on_error(print_then_quit).value();
+        //data.font_renderer.init(data.resource_manager, data.font_atlas);
+        data.font_batch_renderer.init(data.resource_manager, data.font_atlas);
     }
     void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
-
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
-        if (duration > std::chrono::seconds(1)) {
-            state.should_close = true;
-        }
     }
     void draw(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
-        renderer.screen_frame_buffer.clear(data.background_colour);
-
-        // auto pm = data.camera.projection_matrix(renderer.window_width, renderer.window_height);
-        auto pm = Cameras::Orthographic::projection_matrix(renderer.window_width, renderer.window_height);
-
         renderer.screen_frame_buffer.bind();
-        renderer.screen_frame_buffer.clear();
+        renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Core::Shader& s = renderer.shaders[data.s_id.id];
-        Core::Texture& t = renderer.textures[data.t_id.id];
+        data.font_batch_renderer.begin_batch({
+            .resource_manager = data.resource_manager,
+            .screen_dimensions = glm::vec2 { renderer.window_width, renderer.window_height },
+            .font_colour = { 0, 0, 0, 1 },
+        });
 
-        const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 100, { 50, 50 }, data.font_atlas);
+        data.font_batch_renderer.push_to_batch("hi there", { 0, 0 }, 50);
 
-        s.bind();
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. lah blah blah", { 0, 25 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blh blah blah", { 0, 50 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. bah blah blah", { 0, 75 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah bah blah", { 0, 100 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah blah", { 0, 125 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bah", { 0, 150 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bla", { 0, 175 }, 25);
+        // Note that the last four calls are similar to the first four but with slightly different y-positions.
+        // Ensure this is intentional and not a duplication error. If they are indeed different messages or required duplications, convert them similarly:
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. lah blah blah", { 0, 40 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blh blah blah", { 0, 60 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. bah blah blah", { 0, 80 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah bah blah", { 0, 110 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah blah", { 0, 130 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bah", { 0, 160 }, 25);
+        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bla", { 0, 180 }, 25);
 
-        s.set_uniform("u_mvp", pm).on_error(print_then_quit);
-        s.set_uniform("u_texture", static_cast<int>(t.bind().value())).on_error(print_then_quit);
+        data.font_batch_renderer.end_batch();
 
-        va.bind();
-        ib.bind();
-        vb.bind();
-        ib.load_indices(indis);
-        vb.load_vertices(verts);
-        
-        glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
+        // data.font_renderer.add_to_draw_list("some text", pos);
+        // data.font_renderer.add_to_draw_list("some other text", pos2);
+        // data.font_renderer.draw("some other text", pos2);
+
+        // data.font_renderer.begin_batch();
+        //
+        // data.font_renderer.push();
+        // data.font_renderer.push();
+        // data.font_renderer.push();
+        // data.font_renderer.push();
+
+        // data.font_renderer.end_batch();
+
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. lah blah blah", 25, { 0, 25 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blh blah blah", 25, { 0, 50 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. bah blah blah", 25, { 0, 75 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah bah blah", 25, { 0, 100 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah blah", 25, { 0, 125 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bah", 25, { 0, 150 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bla", 25, { 0, 175 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. lah blah blah", 25, { 0, 40 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blh blah blah", 25, { 0, 60 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. bah blah blah", 25, { 0, 80 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah bah blah", 25, { 0, 110 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah blah", 25, { 0, 130 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bah", 25, { 0, 160 }, { 0, 0, 0, 1 });
+        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bla", 25, { 0, 180 }, { 0, 0, 0, 1 });
     }
     void stop() {
-
     }
 };
 

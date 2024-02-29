@@ -5,6 +5,8 @@
 #include <iostream>
 #include <thread>
 
+#include <Renderer/Renderer.hpp>
+
 #include <Engine.hpp>
 
 using namespace std::literals;
@@ -48,6 +50,8 @@ struct SpinningSquareData {
     std::chrono::steady_clock::time_point start_time;
     constexpr static auto TRIANGLE_VERTICES = std::to_array({ 0.5f, 0.5f, 0.0f, 0.5f, -0.5f, 0.0f, -0.5f, -0.5f, 0.0f, -0.5f, 0.5f, 0.0f });
     constexpr static auto TRIANGLE_INDICES = std::to_array<uint32_t>({ 0, 1, 3, 1, 2, 3 });
+
+    Renderer::ResourceManager resource_manager;
 
     AppRenderer::ShaderId s_id;
     AppRenderer::IndexBufferId ib_id;
@@ -97,11 +101,15 @@ struct SpinningSquareLogic {
                 data.ib_id = id;
             });
 
-        renderer.add_vertex_array(Core::VertexBufferLayout<glm::vec3> {}, data.vb_id)
+        renderer.add_vertex_array(Core::VertexBufferLayout<glm::vec3> {}, data.vb_id, data.ib_id)
             .on_error(Utily::ErrorHandler::print_then_quit)
             .on_value([&](auto& id) {
                 data.va_id = id;
             });
+
+        auto [vb_h, vb] = data.resource_manager.create_and_init_resource<Core::VertexBuffer>();
+        auto [ib_h, ib] = data.resource_manager.create_and_init_resource<Core::IndexBuffer>();
+        auto [va_h, va] = data.resource_manager.create_and_init_resource<Core::VertexArray>(Model::Vertex::VBL {}, vb, ib);
     }
     void update(double dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, SpinningSquareData& data) {
 
@@ -148,6 +156,12 @@ struct SpinningTeapotData {
     entt::entity teapot;
     Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 0.5f)) };
 
+    Renderer::ResourceManager resource_manager;
+    Renderer::ResourceHandle<Core::Shader> s_h;
+    Renderer::ResourceHandle<Core::VertexBuffer> vb_h;
+    Renderer::ResourceHandle<Core::IndexBuffer> ib_h;
+    Renderer::ResourceHandle<Core::VertexArray> va_h;
+
     AppRenderer::ShaderId s_id;
     AppRenderer::IndexBufferId ib_id;
     AppRenderer::VertexBufferId vb_id;
@@ -186,7 +200,7 @@ struct SpinningTeapotLogic {
         auto teapot_source = Utily::FileReader::load_entire_file("assets/teapot.obj")
                                  .on_error(print_pause_quit)
                                  .value();
-                                 
+
         auto teapot_model = std::move(Model::decode_as_static_model(teapot_source, { '.', 'o', 'b', 'j' })
                                           .on_error(print_pause_quit)
                                           .value());
@@ -196,26 +210,16 @@ struct SpinningTeapotLogic {
         ecs.emplace<Components::Transform>(data.teapot, glm::vec3 { 0, -1, 1 }, glm::vec3(0.5f));
         ecs.emplace<Components::Spinning>(data.teapot, glm::vec3 { 0, 1, 0 }, 0.0, 1.0);
 
-        renderer.add_shader(data.VERT, data.FRAG)
-            .on_error(Utily::ErrorHandler::print_then_quit)
-            .on_value([&](auto& id) {
-                data.s_id = id;
-            });
-        renderer.add_vertex_buffer()
-            .on_error(Utily::ErrorHandler::print_then_quit)
-            .on_value([&](auto& id) {
-                data.vb_id = id;
-            });
-        renderer.add_index_buffer()
-            .on_error(Utily::ErrorHandler::print_then_quit)
-            .on_value([&](auto& id) {
-                data.ib_id = id;
-            });
-        renderer.add_vertex_array(Model::Vertex::VBL {}, data.vb_id)
-            .on_error(Utily::ErrorHandler::print_then_quit)
-            .on_value([&](auto& id) {
-                data.va_id = id;
-            });
+        auto [s_h, s] = data.resource_manager.create_and_init_resource<Core::Shader>(data.VERT, data.FRAG);
+        auto [vb_h, vb] = data.resource_manager.create_and_init_resource<Core::VertexBuffer>();
+        auto [ib_h, ib] = data.resource_manager.create_and_init_resource<Core::IndexBuffer>();
+        auto [va_h, va] = data.resource_manager.create_and_init_resource<Core::VertexArray>(Model::Vertex::VBL {}, vb, ib);
+
+        data.s_h = s_h;
+        data.vb_h = vb_h;
+        data.va_h = va_h;
+        data.ib_h = ib_h;
+
         data.start_time = std::chrono::high_resolution_clock::now();
     }
     void update(double dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
@@ -243,19 +247,16 @@ struct SpinningTeapotLogic {
         renderer.screen_frame_buffer.clear();
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Core::Shader& s = renderer.shaders[data.s_id.id];
+        auto [s, va, vb, ib] = data.resource_manager.get_resources(data.s_h, data.va_h, data.vb_h, data.ib_h);
 
         s.bind();
         s.set_uniform("u_mvp", mvp);
 
         va.bind();
-        ib.bind();
         vb.bind();
-        ib.load_indices(model.indices);
         vb.load_vertices(model.vertices);
+        ib.bind();
+        ib.load_indices(model.indices);
         glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
     }
 
@@ -274,6 +275,9 @@ struct FontData {
     AppRenderer::VertexBufferId vb_id;
     AppRenderer::VertexArrayId va_id;
     AppRenderer::TextureId t_id;
+
+    Renderer::ResourceManager resource_manager;
+    Renderer::FontRenderer font_renderer;
 
     constexpr static std::string_view VERT =
         "precision highp float; "
@@ -312,10 +316,12 @@ struct FontLogic {
         data.s_id = renderer.add_shader(data.VERT, data.FRAG).on_error(report_error).value();
         data.ib_id = renderer.add_index_buffer().on_error(report_error).value();
         data.vb_id = renderer.add_vertex_buffer().on_error(report_error).value();
-        data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id).on_error(report_error).value();
+        data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id, data.ib_id).on_error(report_error).value();
         data.t_id = renderer.add_texture(data.font_atlas.image).on_error(report_error).value();
 
         data.start_time = std::chrono::high_resolution_clock::now();
+
+        data.font_renderer.init(data.resource_manager, data.font_atlas);
     }
     void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
@@ -337,7 +343,9 @@ struct FontLogic {
         Core::Shader& s = renderer.shaders[data.s_id.id];
         Core::Texture& t = renderer.textures[data.t_id.id];
 
-        const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 100, { 50, 50 }, data.font_atlas);
+        const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 50, { 50, 50 }, data.font_atlas);
+
+        data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "string2", 50, { 0, 0 });
 
         s.bind();
 
@@ -395,8 +403,6 @@ void run_font_renderer() {
             st_app.poll_events();
             st_app.update();
             st_app.render();
-
-            
         },
         0,
         1);

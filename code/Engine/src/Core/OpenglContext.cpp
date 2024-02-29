@@ -98,6 +98,8 @@ static void GLAPIENTRY openglDebugCallback(
               << "\n"
               << std::endl;
 
+    std::cout << Core::DebugOpRecorder::instance().get_formatted_ops() << std::endl;
+
     if (severity == GL_DEBUG_SEVERITY_HIGH) {
         assert(false);
         exit(EXIT_FAILURE);
@@ -148,6 +150,9 @@ namespace Core {
             window_width = width;
             window_height = height;
             glfwMakeContextCurrent(*_window);
+            if constexpr (Config::ENABLE_VSYNC) {
+                glfwSwapInterval(1);
+            }
         }
 #elif defined(CONFIG_TARGET_WEB)
         if (g_window) {
@@ -192,6 +197,7 @@ namespace Core {
             }
             if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::all) {
                 if (GLEW_ARB_debug_output) {
+                    Core::DebugOpRecorder::instance().clear();
                     glEnable(GL_DEBUG_OUTPUT);
                     glDebugMessageCallback(openglDebugCallback, nullptr);
                 }

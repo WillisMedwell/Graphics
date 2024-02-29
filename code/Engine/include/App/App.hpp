@@ -11,10 +11,11 @@
 
 #include "Cameras/Cameras.hpp"
 #include "Profiler/Profiler.hpp"
-#include "Core/Renderer.hpp"
+#include "Core/Core.hpp"
 
 #include "Core/Input.hpp"
-#include "AppRenderer.hpp"
+
+#include "App/AppRenderer.hpp"
 
 #include <chrono>
 #include <thread>
@@ -22,6 +23,8 @@
 struct AppState {
     bool should_close = false;
 };
+
+
 
 template <typename T, typename AppData>
 concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, const Core::InputManager& input, entt::registry& ecs) {
