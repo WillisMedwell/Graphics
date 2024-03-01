@@ -10,8 +10,10 @@ namespace Cameras {
         constexpr static float Z_NEAR { 0.001f }, Z_FAR { 10.0f };
 
     public:
-        inline static auto projection_matrix(float width, float height) noexcept -> glm::mat4 {
+        inline auto projection_matrix(float width, float height) noexcept -> glm::mat4 {
             return glm::ortho(0.0f, width, 0.0f, height, Z_NEAR, Z_FAR);
         }
+
+        Orthographic() = default;
     };
 }

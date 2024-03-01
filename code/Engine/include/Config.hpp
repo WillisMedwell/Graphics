@@ -34,6 +34,9 @@ namespace Config {
     constexpr static bool ENABLE_VSYNC = false;
 }
 
+#include <AL/al.h>
+#include <AL/alc.h>
+
 #if defined(EMSCRIPTEN)
 #include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>

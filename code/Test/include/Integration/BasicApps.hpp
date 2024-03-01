@@ -266,40 +266,12 @@ struct SpinningTeapotLogic {
 
 struct FontData {
     std::chrono::steady_clock::time_point start_time;
-    glm::vec4 background_colour = { 0.25f, 0.25f, 0.0f, 1.0f };
+    glm::vec4 background_colour = { 1.0f, 0.0f, 1.0f, 1.0f };
     Media::Font font;
     Cameras::StationaryPerspective camera { glm::vec3(0, 0, -10), glm::normalize(glm::vec3(0, 0, 1)) };
 
-    AppRenderer::ShaderId s_id;
-    AppRenderer::IndexBufferId ib_id;
-    AppRenderer::VertexBufferId vb_id;
-    AppRenderer::VertexArrayId va_id;
-    AppRenderer::TextureId t_id;
-
     Renderer::ResourceManager resource_manager;
-    Renderer::FontRenderer font_renderer;
-
-    constexpr static std::string_view VERT =
-        "precision highp float; "
-        "uniform mat4 u_mvp;"
-        "layout(location = 0) in vec2 l_pos;"
-        "layout(location = 1) in vec2 l_uv;"
-        "out vec2 uv;"
-        "void main() {"
-        "    gl_Position = u_mvp * vec4(l_pos, -1.0, 1.0);"
-        "    uv = l_uv;"
-        "}"sv;
-    constexpr static std::string_view FRAG =
-        "precision highp float; "
-        "uniform sampler2D u_texture;"
-        "out vec4 FragColor;"
-        "in vec2 uv;"
-        "void main() {"
-        "    vec2 uv_flipped = vec2(uv.x, 1.0f - uv.y);"
-        "    FragColor = vec4(texture(u_texture, uv_flipped).rrrr);"
-        "}"sv;
-
-    Media::FontAtlas font_atlas = {};
+    Renderer::FontBatchRenderer font_batch_renderer;
 };
 struct FontLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
@@ -307,21 +279,16 @@ struct FontLogic {
             FAIL() << error.what();
         };
 
-        auto ttf_raw = Utily::FileReader::load_entire_file("assets/RobotoMono.ttf").on_error(report_error).value();
+        auto ttf = std::move(Utily::FileReader::load_entire_file("assets/RobotoMono.ttf").on_error(report_error).value());
 
-        data.font.init(ttf_raw);
-        data.font_atlas.init(data.font, 100).on_error(report_error);
-        data.font_atlas.image.save_to_disk("FontAtlasGeneration.png").on_error(report_error);
+        Media::Font font;
+        font.init(ttf).on_error(report_error);
 
-        data.s_id = renderer.add_shader(data.VERT, data.FRAG).on_error(report_error).value();
-        data.ib_id = renderer.add_index_buffer().on_error(report_error).value();
-        data.vb_id = renderer.add_vertex_buffer().on_error(report_error).value();
-        data.va_id = renderer.add_vertex_array(Model::Vertex2D::VBL {}, data.vb_id, data.ib_id).on_error(report_error).value();
-        data.t_id = renderer.add_texture(data.font_atlas.image).on_error(report_error).value();
+        Media::FontAtlas font_atlas = std::move(font.gen_image_atlas(100).on_error(report_error).value());
+
+        data.font_batch_renderer.init(data.resource_manager, font_atlas);
 
         data.start_time = std::chrono::high_resolution_clock::now();
-
-        data.font_renderer.init(data.resource_manager, data.font_atlas);
     }
     void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
@@ -330,34 +297,24 @@ struct FontLogic {
         }
     }
     void draw(AppRenderer& renderer, entt::registry& ecs, FontData& data) {
-        renderer.screen_frame_buffer.clear(data.background_colour);
-
-        auto pm = Cameras::Orthographic::projection_matrix(renderer.window_width, renderer.window_height);
-
         renderer.screen_frame_buffer.bind();
+        renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Core::IndexBuffer& ib = renderer.index_buffers[data.ib_id.id];
-        Core::VertexBuffer& vb = renderer.vertex_buffers[data.vb_id.id];
-        Core::VertexArray& va = renderer.vertex_arrays[data.va_id.id];
-        Core::Shader& s = renderer.shaders[data.s_id.id];
-        Core::Texture& t = renderer.textures[data.t_id.id];
+        Renderer::FontBatchRenderer::BatchConfig batch_config = {
+            .resource_manager = data.resource_manager,
+            .screen_dimensions = { renderer.window_width, renderer.window_height },
+            .font_colour = { 0, 0, 0, 1 }
+        };
 
-        const static auto [verts, indis] = Media::FontMeshGenerator::generate_static_mesh("hello there", 50, { 50, 50 }, data.font_atlas);
-
-        data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "string2", 50, { 0, 0 });
-
-        s.bind();
-
-        s.set_uniform("u_mvp", pm);
-        s.set_uniform("u_texture", static_cast<int>(t.bind().value()));
-
-        va.bind();
-        ib.bind();
-        vb.bind();
-        ib.load_indices(indis);
-        vb.load_vertices(verts);
-        glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
+        data.font_batch_renderer.begin_batch(std::move(batch_config));
+        {
+            data.font_batch_renderer.push_to_batch("hi there", { 0, 0 }, 80);
+            for (int i = 0; i < renderer.window_height; i += 14) {
+                data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah blah", { i / 14, i }, 25);
+            }
+        }
+        data.font_batch_renderer.end_batch();
     }
     void stop() {
     }

@@ -9,7 +9,7 @@ namespace Core {
     class DebugOpRecorder
     {
     public:
-        static inline auto instance() -> DebugOpRecorder& {
+        static auto instance() -> DebugOpRecorder& {
             static DebugOpRecorder dor {};
             return dor;
         }
@@ -22,10 +22,8 @@ namespace Core {
 
         inline void push(std::string_view type [[maybe_unused]], std::string_view details [[maybe_unused]]) {
             if constexpr (Config::DEBUG_LEVEL == Config::DebugInfo::all) {
-                try {
+                if (!stopped) {
                     _ops.emplace_back(type, details);
-                } catch (const std::exception& e) {
-                    std::cerr << e.what() << '\n';
                 }
             }
         }
@@ -44,10 +42,15 @@ namespace Core {
             return res;
         }
 
+        inline void stop() {
+            stopped = true;
+        }
+
     private:
         using Ops = std::vector<std::tuple<std::string_view, std::string_view>>;
 
         Ops _ops;
+        bool stopped = false;
         DebugOpRecorder() = default;
     };
 }

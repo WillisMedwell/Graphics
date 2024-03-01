@@ -13,18 +13,16 @@ namespace Core {
         bool immutable = false;
     };
 
-    auto texture_units() -> Utily::StaticVector<TextureUnit, 64>&
-    {
+    auto texture_units() -> Utily::StaticVector<TextureUnit, 64>& {
         static Utily::StaticVector<TextureUnit, 64> texture_units = {};
         return texture_units;
     }
 
-
-    Texture::Texture(Texture&& other) 
+    Texture::Texture(Texture&& other)
         : _height(std::exchange(other._height, 0))
         , _width(std::exchange(other._width, 0))
         , _id(std::exchange(other._id, std::nullopt))
-        , _texture_unit_index(std::exchange(other._texture_unit_index, std::nullopt)) {}
+        , _texture_unit_index(std::exchange(other._texture_unit_index, std::nullopt)) { }
 
     auto getUsableTextureUnit() noexcept
         -> Utily::Result<std::tuple<std::ptrdiff_t, TextureUnit*>, Utily::Error> {
@@ -93,6 +91,10 @@ namespace Core {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
+        if(!img.size() || width == 0 || height == 0) {
+            return Utily::Error("Trying to upload nothing as a texture.");
+        }
+ 
         if (colour_format == Media::ColourFormat::greyscale) {
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
             glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));

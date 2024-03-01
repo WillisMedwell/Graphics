@@ -5,12 +5,24 @@
 #include <Utily/Utily.hpp>
 #include <functional>
 #include <random>
+#include <string>
+#include <string>
 
 namespace Renderer {
 
     template <typename T, typename... Args>
     concept CanBeInitWithArgs = requires(T t, Args&&... args) {
         t.init(std::forward<Args>(args)...);
+    };
+
+    struct Panic {
+        void operator()(Utily::Error& error) {
+            std::cerr << error.what() << std::endl;
+            throw std::runtime_error(std::string{error.what()});
+        }
+        void operator()(auto& error) {
+            throw std::runtime_error("Render panic");
+        }
     };
 
     class ResourceManager

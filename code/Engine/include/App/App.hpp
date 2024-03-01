@@ -10,10 +10,13 @@
 #include <entt/entt.hpp>
 
 #include "Cameras/Cameras.hpp"
-#include "Profiler/Profiler.hpp"
 #include "Core/Core.hpp"
+#include "Profiler/Profiler.hpp"
+
 
 #include "Core/Input.hpp"
+
+#include "Audio/Audio.hpp"
 
 #include "App/AppRenderer.hpp"
 
@@ -23,8 +26,6 @@
 struct AppState {
     bool should_close = false;
 };
-
-
 
 template <typename T, typename AppData>
 concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, const Core::InputManager& input, entt::registry& ecs) {
@@ -54,6 +55,9 @@ private:
     AppData _data;
     AppLogic _logic;
 
+    Audio::Device _audio_device;
+    Audio::Context _audio_context;
+
     Core::OpenglContext _context;
     bool _has_init = false;
     bool _has_stopped = false;
@@ -68,6 +72,10 @@ public:
         _ecs = entt::registry {};
         _logic.init(_renderer, _ecs, _data);
         _input.init(_context.unsafe_window_handle());
+
+        _audio_device.init().on_error(Utily::ErrorHandler::print_then_quit);
+        _audio_context.init(_audio_device).on_error(Utily::ErrorHandler::print_then_quit);
+
         _has_init = true;
         _has_stopped = false;
     }
@@ -77,6 +85,9 @@ public:
             _renderer.stop();
             _logic.stop();
             _context.stop();
+
+            _audio_context.stop();
+            _audio_device.stop();
         }
         _has_stopped = true;
     }

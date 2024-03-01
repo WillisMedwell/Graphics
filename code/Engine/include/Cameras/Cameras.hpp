@@ -6,7 +6,7 @@
 #include "Cameras/Orbit.hpp"
 #include "Cameras/StationaryPerspective.hpp"
 #include "Cameras/Orthographic.hpp"
-
+#include "Cameras/Isometric.hpp"
 
 namespace Cameras {
     // Literally because i forget the order.

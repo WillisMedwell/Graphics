@@ -233,6 +233,7 @@ namespace Core {
         }
         Profiler::Timer glfw_timer("glfwTerminate()");
         glfwTerminate();
+        DebugOpRecorder::instance().stop();
 
 #endif
     }

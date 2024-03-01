@@ -131,12 +131,6 @@ namespace Renderer {
             && _atlas_dimensions.x > 0 && _atlas_dimensions.y > 0;
     }
 
-    struct Panic {
-        void operator()(Utily::Error& error) {
-            throw std::runtime_error(std::string(error.what()));
-        }
-    };
-
     void FontRenderer::init(ResourceManager& resource_manager, Media::FontAtlas& font_atlas) {
 
         auto [s_handle, shader] = resource_manager.create_and_init_resource<Core::Shader>(SHADER_VERT_SRC, SHADER_FRAG_SRC);
@@ -177,8 +171,6 @@ namespace Renderer {
         va.bind();
         ib.bind();
         vb.bind();
-
-        const auto proj_mat = Cameras::Orthographic::projection_matrix(screen_dimensions.x, screen_dimensions.y);
 
         auto mat = glm::mat4(1.0f);
         mat = glm::translate(mat, glm::vec3(bottom_left.x / screen_dimensions.x * 2 - 1, bottom_left.y / screen_dimensions.y * 2 - 1, 0));

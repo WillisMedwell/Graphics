@@ -335,7 +335,7 @@ struct SpinningTeapotLogic {
     void stop() {
     }
 };
-#endif
+#elif 0
 
 struct FontData {
     std::chrono::steady_clock::time_point start_time;
@@ -357,7 +357,7 @@ struct FontLogic {
 
         data.font_atlas.init(data.font, 100).on_error(print_then_quit);
         data.font_atlas.image.save_to_disk("FontAtlasGeneration.png").on_error(print_then_quit);
-        //data.font_renderer.init(data.resource_manager, data.font_atlas);
+        data.font_renderer.init(data.resource_manager, data.font_atlas);
         data.font_batch_renderer.init(data.resource_manager, data.font_atlas);
     }
     void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, FontData& data) {
@@ -367,66 +367,72 @@ struct FontLogic {
         renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        data.font_batch_renderer.begin_batch({
+        Renderer::FontBatchRenderer::BatchConfig config {
             .resource_manager = data.resource_manager,
             .screen_dimensions = glm::vec2 { renderer.window_width, renderer.window_height },
             .font_colour = { 0, 0, 0, 1 },
-        });
+        };
 
-        data.font_batch_renderer.push_to_batch("hi there", { 0, 0 }, 50);
-
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. lah blah blah", { 0, 25 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blh blah blah", { 0, 50 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. bah blah blah", { 0, 75 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah bah blah", { 0, 100 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah blah", { 0, 125 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bah", { 0, 150 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bla", { 0, 175 }, 25);
-        // Note that the last four calls are similar to the first four but with slightly different y-positions.
-        // Ensure this is intentional and not a duplication error. If they are indeed different messages or required duplications, convert them similarly:
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. lah blah blah", { 0, 40 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blh blah blah", { 0, 60 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. bah blah blah", { 0, 80 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah bah blah", { 0, 110 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah blah", { 0, 130 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bah", { 0, 160 }, 25);
-        data.font_batch_renderer.push_to_batch("this is a lot of freaking text on the screen. blah blah bla", { 0, 180 }, 25);
-
+        data.font_batch_renderer.begin_batch(std::move(config));
+        {
+            data.font_batch_renderer.push_to_batch("hi there", { 0, 0 }, 100);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. lah blah blah", { 0, 25 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blh blah blah", { 0, 50 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. bah blah blah", { 0, 75 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah bah blah", { 0, 100 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah blah", { 0, 125 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah bah", { 0, 150 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah bla", { 0, 175 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. lah blah blah", { 0, 40 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blh blah blah", { 0, 60 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. bah blah blah", { 0, 80 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah bah blah", { 0, 110 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah blah", { 0, 130 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah bah", { 0, 160 }, 25);
+            data.font_batch_renderer.push_to_batch("this is a lot of text on the screen. blah blah bla", { 0, 180 }, 25);
+        }
         data.font_batch_renderer.end_batch();
-
-        // data.font_renderer.add_to_draw_list("some text", pos);
-        // data.font_renderer.add_to_draw_list("some other text", pos2);
-        // data.font_renderer.draw("some other text", pos2);
-
-        // data.font_renderer.begin_batch();
-        //
-        // data.font_renderer.push();
-        // data.font_renderer.push();
-        // data.font_renderer.push();
-        // data.font_renderer.push();
-
-        // data.font_renderer.end_batch();
-
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. lah blah blah", 25, { 0, 25 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blh blah blah", 25, { 0, 50 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. bah blah blah", 25, { 0, 75 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah bah blah", 25, { 0, 100 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah blah", 25, { 0, 125 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bah", 25, { 0, 150 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bla", 25, { 0, 175 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. lah blah blah", 25, { 0, 40 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blh blah blah", 25, { 0, 60 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. bah blah blah", 25, { 0, 80 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah bah blah", 25, { 0, 110 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah blah", 25, { 0, 130 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bah", 25, { 0, 160 }, { 0, 0, 0, 1 });
-        // data.font_renderer.draw(data.resource_manager, glm::vec2 { renderer.window_width, renderer.window_height }, "this is a lot of freaking text on the screen. blah blah bla", 25, { 0, 180 }, { 0, 0, 0, 1 });
     }
     void stop() {
     }
 };
 
+#else
+struct IsoData {
+    std::chrono::steady_clock::time_point start_time;
+    glm::vec4 background_colour = { 1, 1, 0, 1 };
+
+    //Cameras::Isometric camera;
+    
+};
+struct IsoLogic {
+    void init(AppRenderer& renderer, entt::registry& ecs, IsoData& data) {
+        data.start_time = std::chrono::high_resolution_clock::now();
+
+        //data.camera.position = { 0, 1, -1};
+        //data.camera.set_direction_via_angles(-45, 0);
+    }
+    void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, IsoData& data) {
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
+        if (duration > std::chrono::seconds(1)) {
+            state.should_close = true;
+        }
+    }
+    void draw(AppRenderer& renderer, entt::registry& ecs, IsoData& data) {
+        renderer.screen_frame_buffer.bind();
+        renderer.screen_frame_buffer.clear(data.background_colour);
+        renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
+    }
+    void play() {
+
+    }
+    void stop() {
+    }
+};
+
+#endif
+
 int main() {
-    auto_run_app<FontData, FontLogic>("Demo", 1000, 500);
+    auto_run_app<IsoData, IsoLogic>("Demo", 1000, 500);
     return 0;
 }
