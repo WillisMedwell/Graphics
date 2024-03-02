@@ -41,18 +41,18 @@ namespace Audio {
             }
         }
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
-            if (sound.size_in_bytes() == 0) {
+            if (sound.raw_bytes().size_bytes() == 0) {
                 return Utily::Error("Audio::Buffer::load_sound() failed. The Sound passed in has no data.");
             }
         }
-        alBufferData(*_id, (ALenum)sound.openal_format(), sound.data(), sound.size_in_bytes(), sound.frequency());
+        alBufferData(*_id, (ALenum)sound.openal_format(), sound.raw_bytes().data(), sound.raw_bytes().size_bytes(), sound.frequency());
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
             if (auto error = glGetError(); error == AL_OUT_OF_MEMORY) {
                 return Utily::Error("Audio::Buffer::load_sound() failed. alBufferData() failed: Ran out of memory.");
             } else if (error == AL_INVALID_ENUM) {
                 return Utily::Error("Audio::Buffer::load_sound() failed. alBufferData() failed: The sound format does not exist.");
             } else if (error == AL_INVALID_VALUE) {
-                if (sound.data() == nullptr) {
+                if (sound.raw_bytes().data() == nullptr) {
                     return Utily::Error("Audio::Buffer::load_sound() failed. alBufferData() failed: The Sound.data() is nullptr.");
                 } else {
                     return Utily::Error("Audio::Buffer::load_sound() failed. alBufferData() failed: The Sound::size_of_bytes() is invaid for the format.");

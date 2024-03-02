@@ -402,20 +402,42 @@ struct IsoData {
     std::chrono::steady_clock::time_point start_time;
     glm::vec4 background_colour = { 1, 1, 0, 1 };
 
-    //Cameras::Isometric camera;
-    
+    Audio::Device audio_device;
+    Audio::Context audio_context;
+    Audio::Buffer audio_buffer;
+    Audio::Source audio_source;
+
+    // Cameras::Isometric camera;
 };
 struct IsoLogic {
     void init(AppRenderer& renderer, entt::registry& ecs, IsoData& data) {
         data.start_time = std::chrono::high_resolution_clock::now();
 
-        //data.camera.position = { 0, 1, -1};
-        //data.camera.set_direction_via_angles(-45, 0);
+        Media::Sound sound {};
+
+        auto wav_file_data = Utily::FileReader::load_entire_file("assets/woosh.wav");
+        wav_file_data.on_error(Utily::ErrorHandler::print_then_quit);
+        sound.init_from_wav(wav_file_data.value());
+
+
+        // data.camera.position = { 0, 1, -1};
+        // data.camera.set_direction_via_angles(-45, 0);
+
+        data.audio_device.init().on_error(Utily::ErrorHandler::print_then_quit);
+        data.audio_context.init(data.audio_device).on_error(Utily::ErrorHandler::print_then_quit);
+        data.audio_buffer.init().on_error(Utily::ErrorHandler::print_then_quit);
+        data.audio_buffer.load_sound(sound).on_error(Utily::ErrorHandler::print_then_quit);
+        
+        data.audio_source.init().on_error(Utily::ErrorHandler::print_then_quit);
+        data.audio_source.bind(data.audio_buffer).on_error(Utily::ErrorHandler::print_then_quit);
+        data.audio_source.play().on_error(Utily::ErrorHandler::print_then_quit);
+        
     }
     void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, IsoData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
-        if (duration > std::chrono::seconds(1)) {
-            state.should_close = true;
+        if (duration > std::chrono::milliseconds(250)) {
+            data.audio_source.play().on_error(Utily::ErrorHandler::print_then_quit);
+            data.start_time = std::chrono::high_resolution_clock::now();
         }
     }
     void draw(AppRenderer& renderer, entt::registry& ecs, IsoData& data) {
@@ -424,7 +446,6 @@ struct IsoLogic {
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
     }
     void play() {
-
     }
     void stop() {
     }

@@ -8,6 +8,7 @@
         "lodepng",
         "stb",
         "freetype",
+        "drlibs",
         {
             "name": "opengl",
             "platform": "!emscripten"

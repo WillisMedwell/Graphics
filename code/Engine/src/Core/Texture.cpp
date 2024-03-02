@@ -76,12 +76,10 @@ namespace Core {
             }
         }
 
-        auto ir = image.data();
-        if (!ir.has_value()) {
+        if (image.raw_bytes().size() == 0) {
             return Utily::Error { "Image has no data." };
         }
 
-        auto [img, width, height, colour_format] = ir.value();
         if (auto br = bind(); br.has_error()) {
             return br.error();
         }
@@ -91,17 +89,19 @@ namespace Core {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-        if(!img.size() || width == 0 || height == 0) {
-            return Utily::Error("Trying to upload nothing as a texture.");
-        }
- 
-        if (colour_format == Media::ColourFormat::greyscale) {
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-            glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));
+        int32_t bytes_per_pixel = 4;
+        uint32_t gl_format = GL_RGBA8;
+
+        if (image.format() == Media::ColourFormat::greyscale) {
+            bytes_per_pixel = 1;
+            gl_format = GL_RED;
         } else {
-            glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-            glTexImage2D(GL_TEXTURE_2D, 0, (GLenum)colour_format, width, height, 0, GL_RGBA8, GL_UNSIGNED_BYTE, reinterpret_cast<const void*>(img.data()));
+            gl_format = GL_RGBA8;
+            bytes_per_pixel = 4;
         }
+        const void* img_data = reinterpret_cast<const void*>(image.raw_bytes().data());
+        glPixelStorei(GL_UNPACK_ALIGNMENT, bytes_per_pixel);
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)image.format(), image.dimensions().x, image.dimensions().y, 0, gl_format, GL_UNSIGNED_BYTE, img_data);
 
         if (offload_image_on_success) {
             glFinish();

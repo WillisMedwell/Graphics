@@ -134,17 +134,6 @@ namespace Media {
         _height = 0;
     }
 
-    auto Image::data() noexcept -> std::optional<std::tuple<std::span<const uint8_t>, uint32_t, uint32_t, ColourFormat>> {
-        if (_width == 0 || _height == 0 || _data.size() == 0) {
-            return std::nullopt;
-        }
-        return std::tuple {
-            std::span { _data.data(), _data.size() },
-            _width,
-            _height,
-            _format
-        };
-    }
 
     void Image::add_fence(Core::Fence&& fence) noexcept {
         _fence.emplace(std::forward<Core::Fence>(fence));

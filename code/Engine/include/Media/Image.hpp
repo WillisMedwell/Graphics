@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <optional>
 
+#include <glm/vec2.hpp>
+
 namespace Media {
 
     enum class ColourFormat : uint32_t {
@@ -24,7 +26,7 @@ namespace Media {
         Image() = default;
         Image(const Image&) = delete;
         Image(Image&& other);
-        
+
         Image& operator=(Image&& other) noexcept;
 
         [[nodiscard]] auto init(
@@ -43,14 +45,14 @@ namespace Media {
         void resize(float scale) noexcept;
         void resize(uint32_t width, uint32_t height) noexcept;
 
-        [[nodiscard]] auto data() noexcept -> std::optional<std::tuple<std::span<const uint8_t>, uint32_t, uint32_t, ColourFormat>>;
+        [[nodiscard]] inline auto raw_bytes() const noexcept -> std::span<const uint8_t> {
+            return std::span { _data.cbegin(), _data.cend() };
+        }
+        [[nodiscard]] inline auto dimensions() const noexcept -> glm::uvec2 { return { _width, _height }; }
+        [[nodiscard]] inline auto format() const noexcept -> ColourFormat { return _format; }
 
         void add_fence(Core::Fence&& fence) noexcept;
         ~Image();
-
-        [[nodiscard]] inline auto width() const noexcept { return _width; }
-        [[nodiscard]] inline auto height() const noexcept { return _height; }
-
 
     private:
         std::vector<uint8_t> _data;

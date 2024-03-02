@@ -73,8 +73,8 @@ public:
         _logic.init(_renderer, _ecs, _data);
         _input.init(_context.unsafe_window_handle());
 
-        _audio_device.init().on_error(Utily::ErrorHandler::print_then_quit);
-        _audio_context.init(_audio_device).on_error(Utily::ErrorHandler::print_then_quit);
+        /*_audio_device.init().on_error(Utily::ErrorHandler::print_then_quit);
+        _audio_context.init(_audio_device).on_error(Utily::ErrorHandler::print_then_quit);*/
 
         _has_init = true;
         _has_stopped = false;
@@ -86,8 +86,8 @@ public:
             _logic.stop();
             _context.stop();
 
-            _audio_context.stop();
-            _audio_device.stop();
+            /*_audio_context.stop();
+            _audio_device.stop();*/
         }
         _has_stopped = true;
     }
