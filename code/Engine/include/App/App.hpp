@@ -13,10 +13,7 @@
 #include "Core/Core.hpp"
 #include "Profiler/Profiler.hpp"
 
-
 #include "Core/Input.hpp"
-
-#include "Audio/Audio.hpp"
 
 #include "App/AppRenderer.hpp"
 
@@ -28,18 +25,18 @@ struct AppState {
 };
 
 template <typename T, typename AppData>
-concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, const Core::InputManager& input, entt::registry& ecs) {
+concept HasValidAppLogic = requires(T t, double dt, AppState& state, AppData& data, AppRenderer& renderer, Core::AudioManager& audio, const Core::InputManager& input) {
     {
-        t.init(renderer, ecs, data)
+        t.init(renderer, audio, data)
     } -> std::same_as<void>;
     {
-        t.update(dt, input, state, ecs, data)
+        t.update(dt, input, audio, state, data)
     } -> std::same_as<void>;
     {
-        t.draw(renderer, ecs, data)
+        t.draw(renderer, data)
     } -> std::same_as<void>;
     {
-        t.stop()
+        t.stop(data)
     } -> std::same_as<void>;
 };
 
@@ -55,13 +52,17 @@ private:
     AppData _data;
     AppLogic _logic;
 
-    Audio::Device _audio_device;
-    Audio::Context _audio_context;
+    Core::AudioManager _audio;
 
     Core::OpenglContext _context;
     bool _has_init = false;
     bool _has_stopped = false;
     std::chrono::high_resolution_clock::time_point _last_update;
+
+    inline static auto _panic = [](auto& error) {
+        std::cerr << error.what() << std::endl;
+        throw std::runtime_error(std::string(error.what()));
+    };
 
 public:
     auto init(std::string_view app_name, uint_fast16_t width, uint_fast16_t height) -> void {
@@ -69,12 +70,12 @@ public:
         Profiler::Timer timer("App::init()", { "App" });
 
         _context.init(app_name, width, height).on_error(Utily::ErrorHandler::print_then_quit);
-        _ecs = entt::registry {};
-        _logic.init(_renderer, _ecs, _data);
         _input.init(_context.unsafe_window_handle());
 
-        /*_audio_device.init().on_error(Utily::ErrorHandler::print_then_quit);
-        _audio_context.init(_audio_device).on_error(Utily::ErrorHandler::print_then_quit);*/
+        _audio.init().on_error(_panic);
+        _ecs = entt::registry {};
+
+        _logic.init(_renderer, _audio, _data);
 
         _has_init = true;
         _has_stopped = false;
@@ -82,26 +83,24 @@ public:
     auto stop() -> void {
         if (!_has_stopped) {
             Profiler::Timer timer("App::stop()", { "App" });
+            _logic.stop(_data);
             _renderer.stop();
-            _logic.stop();
+            _audio.stop();
             _context.stop();
-
-            /*_audio_context.stop();
-            _audio_device.stop();*/
         }
         _has_stopped = true;
     }
     auto update() -> void {
         Profiler::Timer timer("App::update()", { "App" });
         double dt = std::chrono::duration<double> { std::chrono::high_resolution_clock::now() - _last_update }.count();
-        _logic.update(dt, _input, _state, _ecs, _data);
+        _logic.update(dt, _input, _audio, _state, _data);
         _last_update = std::chrono::high_resolution_clock::now();
     }
     auto render() -> void {
         Profiler::Timer timer("App::render()", { "App" });
         _renderer.window_width = _context.window_width;
         _renderer.window_height = _context.window_height;
-        _logic.draw(_renderer, _ecs, _data);
+        _logic.draw(_renderer, _data);
         _context.swap_buffers();
     }
 

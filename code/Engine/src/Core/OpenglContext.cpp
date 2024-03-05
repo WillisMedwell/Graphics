@@ -246,12 +246,17 @@ namespace Core {
 
     void OpenglContext::poll_events() {
         Profiler::Timer timer("OpenglContext::poll_events()", { "OpenglContext" });
-
         validate_window();
-        int width, height;
-        glfwGetWindowSize(*_window, &width, &height);
-        glfwPollEvents();
-        window_width = static_cast<uint_fast16_t>(width);
-        window_height = static_cast<uint_fast16_t>(height);
+        {
+            Profiler::Timer timer2("glfwPollEvents()", { "OpenglContext" });
+            glfwPollEvents();
+        }
+        {
+            Profiler::Timer timer3("glfwGetWindowSize()", { "OpenglContext" });
+            int width, height;
+            glfwGetWindowSize(*_window, &width, &height);
+            window_width = static_cast<uint_fast16_t>(width);
+            window_height = static_cast<uint_fast16_t>(height);
+        }
     }
 }

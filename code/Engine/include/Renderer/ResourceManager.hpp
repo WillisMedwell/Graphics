@@ -21,7 +21,7 @@ namespace Renderer {
             throw std::runtime_error(std::string{error.what()});
         }
         void operator()(auto& error) {
-            throw std::runtime_error("Render panic");
+            throw std::runtime_error(std::string(error));
         }
     };
 

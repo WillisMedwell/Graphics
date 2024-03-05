@@ -34,6 +34,8 @@ namespace Config {
     constexpr static bool ENABLE_VSYNC = false;
 }
 
+
+
 #include <AL/al.h>
 #include <AL/alc.h>
 

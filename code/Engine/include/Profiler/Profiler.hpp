@@ -35,7 +35,7 @@ public:
         Timer(const Timer&) = delete;
         Timer(Timer&&) = delete;
 
-        Timer(std::string_view function_name = std::source_location::current().function_name(), std::vector<std::string_view> cats = {});
+        Timer(std::string_view function_name, std::vector<std::string_view> cats = {});
         ~Timer();
     };
 

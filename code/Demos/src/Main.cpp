@@ -12,6 +12,7 @@ using namespace std::literals;
 static inline auto print_then_quit = [](const auto& error) {
     std::cout << error.what();
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    throw std::runtime_error(std::string(error.what()));
     exit(EXIT_FAILURE);
 };
 
@@ -367,7 +368,7 @@ struct FontLogic {
         renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-        Renderer::FontBatchRenderer::BatchConfig config {
+    Renderer::FontBatchRenderer::BatchConfig config {
             .resource_manager = data.resource_manager,
             .screen_dimensions = glm::vec2 { renderer.window_width, renderer.window_height },
             .font_colour = { 0, 0, 0, 1 },
@@ -402,52 +403,37 @@ struct IsoData {
     std::chrono::steady_clock::time_point start_time;
     glm::vec4 background_colour = { 1, 1, 0, 1 };
 
-    Audio::Device audio_device;
-    Audio::Context audio_context;
-    Audio::Buffer audio_buffer;
-    Audio::Source audio_source;
-
-    // Cameras::Isometric camera;
+    Core::AudioManager::BufferHandle sound_buffer;
 };
 struct IsoLogic {
-    void init(AppRenderer& renderer, entt::registry& ecs, IsoData& data) {
+    void init(AppRenderer& renderer, Core::AudioManager& audio, IsoData& data) {
         data.start_time = std::chrono::high_resolution_clock::now();
 
         Media::Sound sound {};
 
         auto wav_file_data = Utily::FileReader::load_entire_file("assets/woosh.wav");
-        wav_file_data.on_error(Utily::ErrorHandler::print_then_quit);
-        sound.init_from_wav(wav_file_data.value());
+        wav_file_data.on_error(print_then_quit);
+        sound.init_from_wav(wav_file_data.value()).on_error(print_then_quit);
 
+        auto res = audio.load_sound_into_buffer(sound).on_error(print_then_quit);
 
-        // data.camera.position = { 0, 1, -1};
-        // data.camera.set_direction_via_angles(-45, 0);
+        data.sound_buffer = res.value();
 
-        data.audio_device.init().on_error(Utily::ErrorHandler::print_then_quit);
-        data.audio_context.init(data.audio_device).on_error(Utily::ErrorHandler::print_then_quit);
-        data.audio_buffer.init().on_error(Utily::ErrorHandler::print_then_quit);
-        data.audio_buffer.load_sound(sound).on_error(Utily::ErrorHandler::print_then_quit);
-        
-        data.audio_source.init().on_error(Utily::ErrorHandler::print_then_quit);
-        data.audio_source.bind(data.audio_buffer).on_error(Utily::ErrorHandler::print_then_quit);
-        data.audio_source.play().on_error(Utily::ErrorHandler::print_then_quit);
-        
+        audio.play_sound(data.sound_buffer).on_error(print_then_quit);
     }
-    void update(float dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, IsoData& data) {
+    void update(float dt, const Core::InputManager& input, Core::AudioManager& audio, AppState& state, IsoData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
-        if (duration > std::chrono::milliseconds(250)) {
-            data.audio_source.play().on_error(Utily::ErrorHandler::print_then_quit);
+        if (duration > std::chrono::milliseconds(1)) {
+            audio.play_sound(data.sound_buffer).on_error(print_then_quit);
             data.start_time = std::chrono::high_resolution_clock::now();
         }
     }
-    void draw(AppRenderer& renderer, entt::registry& ecs, IsoData& data) {
+    void draw(AppRenderer& renderer, IsoData& data) {
         renderer.screen_frame_buffer.bind();
         renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
     }
-    void play() {
-    }
-    void stop() {
+    void stop(IsoData& data) {
     }
 };
 

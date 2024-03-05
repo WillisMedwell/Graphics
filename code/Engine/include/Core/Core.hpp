@@ -11,6 +11,7 @@ namespace Core {
     class VertexBuffer;
     class FrameBuffer;
     class ScreenFrameBuffer;
+    class AudioManager;
 }
 
 #include "Fence.hpp"
@@ -23,3 +24,4 @@ namespace Core {
 #include "VertexBuffer.hpp"
 #include "VertexBufferLayout.hpp"
 #include "FrameBuffer.hpp"
+#include "AudioManager.hpp"
