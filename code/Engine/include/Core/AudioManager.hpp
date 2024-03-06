@@ -18,12 +18,25 @@ namespace Core {
         struct BufferHandle {
             int index = -1;
         };
+        struct SourceHandle {
+            int index = -1;
+        };
+
+        struct ListenerProperties {
+            std::optional<glm::vec3> pos = std::nullopt;
+            std::optional<glm::vec3> vel = std::nullopt;
+            std::optional<glm::vec3> dir = std::nullopt;
+            constexpr static glm::vec3 UP_DIR = { 0, 1, 0 };
+        };
 
         [[nodiscard]] auto init() -> Utily::Result<void, Utily::Error>;
         void stop();
 
         [[nodiscard]] auto load_sound_into_buffer(const Media::Sound& sound) -> Utily::Result<BufferHandle, Utily::Error>;
-        [[nodiscard]] auto play_sound(BufferHandle buffer_handle, glm::vec3 pos = { 0, 0, 0 }) -> Utily::Result<void, Utily::Error>;
+        [[nodiscard]] auto play_sound(BufferHandle buffer_handle, glm::vec3 pos = { 0, 0, 0 }, glm::vec3 vel = { 0, 0, 0 }) -> Utily::Result<SourceHandle, Utily::Error>;
+
+        [[nodiscard]] auto set_source_motion(SourceHandle source_handle, glm::vec3 pos = { 0, 0, 0 }, glm::vec3 vel = { 0, 0, 0 }) -> Utily::Result<void, Utily::Error>;
+        void set_listener_properties(const ListenerProperties& listener_properties);
 
     private:
         constexpr static size_t MAX_BUFFERS = 1024;

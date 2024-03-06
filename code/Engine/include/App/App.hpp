@@ -59,7 +59,7 @@ private:
     bool _has_stopped = false;
     std::chrono::high_resolution_clock::time_point _last_update;
 
-    inline static auto _panic = [](auto& error) {
+    inline static auto panic = [](auto& error) {
         std::cerr << error.what() << std::endl;
         throw std::runtime_error(std::string(error.what()));
     };
@@ -72,10 +72,13 @@ public:
         _context.init(app_name, width, height).on_error(Utily::ErrorHandler::print_then_quit);
         _input.init(_context.unsafe_window_handle());
 
-        _audio.init().on_error(_panic);
+        _audio.init().on_error(panic);
         _ecs = entt::registry {};
 
-        _logic.init(_renderer, _audio, _data);
+        {
+            Profiler::Timer timer2("Logic::init()");
+            _logic.init(_renderer, _audio, _data);
+        }
 
         _has_init = true;
         _has_stopped = false;
@@ -93,14 +96,21 @@ public:
     auto update() -> void {
         Profiler::Timer timer("App::update()", { "App" });
         double dt = std::chrono::duration<double> { std::chrono::high_resolution_clock::now() - _last_update }.count();
-        _logic.update(dt, _input, _audio, _state, _data);
+        {
+            Profiler::Timer timer2("Logic::update()");
+            _logic.update(dt, _input, _audio, _state, _data);
+        }
         _last_update = std::chrono::high_resolution_clock::now();
     }
     auto render() -> void {
         Profiler::Timer timer("App::render()", { "App" });
         _renderer.window_width = _context.window_width;
         _renderer.window_height = _context.window_height;
-        _logic.draw(_renderer, _data);
+
+        {
+            Profiler::Timer timer2("Logic::draw()");
+            _logic.draw(_renderer, _data);
+        }
         _context.swap_buffers();
     }
 
@@ -124,8 +134,8 @@ void auto_run_app(std::string_view app_name = "Auto Running App", uint16_t width
 
 #if defined(CONFIG_TARGET_NATIVE)
     {
-        Profiler::Timer timer("App::main_loop()");
         while (app.is_running()) {
+            Profiler::Timer timer("App::main_loop()");
             app.poll_events();
             app.update();
             app.render();

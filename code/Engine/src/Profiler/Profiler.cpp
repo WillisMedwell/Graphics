@@ -38,11 +38,12 @@ auto Profiler::format_as_trace_event_json() -> std::string {
 
     for (const auto& [process, recordings] : _processes_recordings) {
         for (const auto& recording : recordings) {
-            res += "\t\t{ \"name\": \"";
+            
+            res += "\t\t{ \"args\":{}, \"name\":\"";
             res += recording.name;
 
             if (recording.categories.size()) {
-                res += "\", \"cat\": \"";
+                res += "\", \"cat\":\"";
                 for (std::ptrdiff_t i = 0; i < recording.categories.size() - 1; ++i) {
                     res += *(recording.categories.begin() + i);
                     res += ',';
@@ -52,18 +53,18 @@ auto Profiler::format_as_trace_event_json() -> std::string {
             } else {
                 res += "\", ";
             }
-            res += "\"ph\": \"X\", ";
-            res += "\"ts\": \"";
+            res += "\"ph\":\"X\", ";
+            res += "\"ts\":";
             res += std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(recording.start_time - _profiler_start_time).count() / 1000.0);
-            res += "\", ";
-            res += "\"dur\": \"";
+            res += ", ";
+            res += "\"dur\":";
             res += std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(recording.end_time - recording.start_time).count() / 1000.0);
-            res += "\", ";
+            res += ", ";
             res += "\"pid\": \"";
             res += process;
-            res += "\", \"tid\": \"";
+            res += "\", \"tid\":";
             res += std::to_string(static_cast<uint64_t>(std::hash<std::thread::id> {}(recording.thread_id)));
-            res += "\" },\n";
+            res += " },\n";
         }
     }
     if (_processes_recordings.size()) {

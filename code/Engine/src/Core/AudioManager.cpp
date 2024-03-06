@@ -222,8 +222,10 @@ namespace Core {
                 buffer.is_populated = true;
 
                 if (sound.openal_format() == Media::Sound::FormatOpenal::stereo16) {
+                    std::cout << "Stereo" << '\n';
                     buffer.duration = std::chrono::milliseconds { static_cast<int>(static_cast<float>(sound.raw_bytes().size_bytes()) / 4.0f / sound.frequency() * 1000.0f) };
                 } else if (sound.openal_format() == Media::Sound::FormatOpenal::mono16) {
+                    std::cout << "Mono" << '\n';
                     buffer.duration = std::chrono::milliseconds { static_cast<int>(static_cast<float>(sound.raw_bytes().size_bytes()) / 2.0f / sound.frequency() * 1000.0f) };
                 } else {
                     return Utily::Error("Core::AudioManager::load_sound_into_buffer() failed. Unhandled format");
@@ -235,7 +237,7 @@ namespace Core {
         return Utily::Error("Unable to find empty buffer");
     }
 
-    auto AudioManager::play_sound(BufferHandle buffer_handle, glm::vec3 pos) -> Utily::Result<void, Utily::Error> {
+    auto AudioManager::play_sound(BufferHandle buffer_handle, glm::vec3 pos, glm::vec3 vel) -> Utily::Result<Core::AudioManager::SourceHandle, Utily::Error> {
         Profiler::Timer timer("Core::AudioManager::play_sound()");
 
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
@@ -265,8 +267,8 @@ namespace Core {
             return true;
         };
 
-        for (Source& source : _sources) {
-
+        for (int i = 0; i < _sources.size(); ++i) {
+            Source& source = _sources[i];
             if (!is_source_playing(source)) {
                 const Buffer& buffer = _buffers[buffer_handle.index];
 
@@ -276,6 +278,7 @@ namespace Core {
                     source.attached_buffer = buffer_handle;
                 }
                 alSource3f(source.id, AL_POSITION, pos.x, pos.y, pos.z);
+                alSource3f(source.id, AL_VELOCITY, vel.x, vel.y, vel.z);
                 {
                     Profiler::Timer player("alSourcePlay()");
                     alSourcePlay(source.id);
@@ -289,9 +292,60 @@ namespace Core {
                         return Utily::Error("Core::AudioManager::play_sound() failed. Unable to play sound.");
                     }
                 }
-                return {};
+
+                return Core::AudioManager::SourceHandle { i };
             }
         }
         return Utily::Error("Core::AudioManager::play_sound() failed. No free sources avaliable");
+    }
+
+    void AudioManager::set_listener_properties(const ListenerProperties& listener_properties) {
+        Profiler::Timer timer("Core::AudioManager::set_listener_properties()");
+
+        constexpr static auto default_val = glm::vec3(std::numeric_limits<float>::min());
+        static ListenerProperties last = { default_val, default_val, default_val };
+
+        if (listener_properties.pos && last.pos.value() != listener_properties.pos.value()) {
+            alListener3f(AL_POSITION, listener_properties.pos.value().x, listener_properties.pos.value().y, listener_properties.pos.value().z);
+            last.pos = listener_properties.pos;
+        }
+        if (listener_properties.vel && last.vel.value() != listener_properties.vel.value()) {
+            alListener3f(AL_VELOCITY, listener_properties.vel.value().x, listener_properties.vel.value().y, listener_properties.vel.value().z);
+            last.vel = listener_properties.vel;
+        }
+        if (listener_properties.dir && last.dir.value() != listener_properties.dir.value()) {
+            glm::vec3 orientation[2] = { listener_properties.dir.value(), listener_properties.UP_DIR };
+            alListenerfv(AL_ORIENTATION, reinterpret_cast<float*>(orientation));
+            last.dir = listener_properties.dir;
+        }
+    }
+
+    auto AudioManager::set_source_motion(SourceHandle source_handle, glm::vec3 pos, glm::vec3 vel) -> Utily::Result<void, Utily::Error> {
+        Profiler::Timer timer("Core::AudioManager::set_source_motion()");
+
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
+            Profiler::Timer timer2("alIsSource() *debug*");
+            if (source_handle.index >= _sources.size()) {
+                return Utily::Error("Core::AudioManager::set_source_motion() failed. The source is out of range.");
+            } else if (!alIsSource(this->_sources[source_handle.index].id)) {
+                return Utily::Error("Core::AudioManager::set_source_motion() failed. OpenAL has invalidated the source.");
+            }
+        }
+        const uint32_t& source_id = _sources[source_handle.index].id;
+        {
+            Profiler::Timer timer3("alSource3f(AL_POSITION)");
+            alSource3f(source_id, AL_POSITION, pos.x, pos.y, pos.z);
+        }
+        {
+            Profiler::Timer timer3("alSource3f(AL_VELOCITY)");
+            alSource3f(source_id, AL_VELOCITY, vel.x, vel.y, vel.z);
+        }
+
+        if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {
+            if (glGetError() != AL_NO_ERROR) {
+                return Utily::Error("Core::AudioManager::set_source_motion() failed. Unable to play sound.");
+            }
+        }
+        return {};
     }
 }

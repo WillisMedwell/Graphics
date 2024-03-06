@@ -368,7 +368,7 @@ struct FontLogic {
         renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
 
-    Renderer::FontBatchRenderer::BatchConfig config {
+        Renderer::FontBatchRenderer::BatchConfig config {
             .resource_manager = data.resource_manager,
             .screen_dimensions = glm::vec2 { renderer.window_width, renderer.window_height },
             .font_colour = { 0, 0, 0, 1 },
@@ -404,14 +404,16 @@ struct IsoData {
     glm::vec4 background_colour = { 1, 1, 0, 1 };
 
     Core::AudioManager::BufferHandle sound_buffer;
+    Core::AudioManager::SourceHandle source_handle;
+
+    Components::Spinning spinning;
 };
 struct IsoLogic {
     void init(AppRenderer& renderer, Core::AudioManager& audio, IsoData& data) {
-        data.start_time = std::chrono::high_resolution_clock::now();
 
         Media::Sound sound {};
 
-        auto wav_file_data = Utily::FileReader::load_entire_file("assets/woosh.wav");
+        auto wav_file_data = Utily::FileReader::load_entire_file("assets/background_sound.wav");
         wav_file_data.on_error(print_then_quit);
         sound.init_from_wav(wav_file_data.value()).on_error(print_then_quit);
 
@@ -419,21 +421,42 @@ struct IsoLogic {
 
         data.sound_buffer = res.value();
 
-        audio.play_sound(data.sound_buffer).on_error(print_then_quit);
+        data.spinning.axis_of_rotation = { 0, 1, 0 };
+        data.spinning.angle = 0;
+        data.spinning.rotations_per_second = 1;
+
+        data.source_handle = audio.play_sound(data.sound_buffer).on_error(print_then_quit).value();
+        data.start_time = std::chrono::high_resolution_clock::now();
     }
+
     void update(float dt, const Core::InputManager& input, Core::AudioManager& audio, AppState& state, IsoData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
-        if (duration > std::chrono::milliseconds(1)) {
-            audio.play_sound(data.sound_buffer).on_error(print_then_quit);
-            data.start_time = std::chrono::high_resolution_clock::now();
-        }
+        
+         if (duration > std::chrono::seconds(3) {
+             state.should_close = true;
+         }
+
+        data.spinning.update(dt);
+        auto quat = data.spinning.calc_quat();
+        glm::vec4 point { 5, 0, 0, 1 };
+        point = quat * point;
+
+        audio.set_source_motion(data.source_handle, point, { 0, 0, 0 }).on_error(print_then_quit);
+
+        Core::AudioManager::ListenerProperties lp {};
+        lp.pos = { 0, 0, 0 };
+        lp.dir = { 0, 0, 1 };
+        lp.vel = { 0, 0, 0 };
+        audio.set_listener_properties(lp);
     }
+
     void draw(AppRenderer& renderer, IsoData& data) {
         renderer.screen_frame_buffer.bind();
         renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
     }
     void stop(IsoData& data) {
+
     }
 };
 
