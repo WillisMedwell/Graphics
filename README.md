@@ -6,7 +6,15 @@ An experimental project exploring a range of tools, techniques, and topics relat
 
 Check out the online tests [here!](https://willismedwell.github.io/Graphics)
 
-<details><summary><h2>Building</h2></summary>
+<details><summary><b>Features</b></summary>
+   
+- [x] 3D-Model Loading _(using Assmip)_
+- [x] 3D-Spatial Audio _(using OpenAl)_
+- [x] Font Batch Rendering _(using dynamic font atlas generation with FreeType)_
+
+</details>
+
+<details><summary><b>Building</b></summary>
 
 ---
 
@@ -50,7 +58,8 @@ Make sure all these tools are correctly installed and configured in your system'
 ---
 
 </details>
-<details><summary><h2>Libraries & Licenses</h2></summary>
+
+<details><summary><b>Libraries & Licenses</b></summary>
 
 - OpenGL Mathematics (GLM). *Which is licensed under The Happy Bunny License and the MIT License. <br>See [LICENSE_GLM](LICENSES/LICENSE_GLM) for more details.*
 
