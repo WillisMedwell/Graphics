@@ -13,6 +13,7 @@ namespace Renderer {
             glm::vec4 font_colour;
         };
         void init(ResourceManager& resource_manager, Media::FontAtlas& font_atlas);
+        
         void begin_batch(BatchConfig&& batch_config);
         void push_to_batch(std::string_view text, glm::vec2 bottom_left, float height_px);
         void end_batch();
@@ -25,6 +26,7 @@ namespace Renderer {
             glm::vec2 uv_coord;
             using VBL = Core::VertexBufferLayout<glm::vec2, glm::vec2>;
         };
+        
         std::optional<BatchConfig> _current_batch_config = std::nullopt;
         std::vector<Vertex> _current_batch_vertices = {};
 

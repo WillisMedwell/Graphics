@@ -17,7 +17,7 @@
 #include <assimp/scene.h>
 
 namespace Model {
-    auto decode_as_static_model(std::span<uint8_t> file_data, Utily::StaticVector<char, 16> file_extension)
+    auto decode_as_static_model(std::span<uint8_t> file_data, std::string_view file_extension)
         -> Utily::Result<Static, Utily::Error> {
 
         Profiler::Timer timer("Model::decode_as_static_model()", { "rendering" });
@@ -36,8 +36,6 @@ namespace Model {
         
         Assimp::Importer importer {};
 
-        file_extension.emplace_back('\0'); // make null terminated.
-
         const aiScene* assimp_scene = nullptr;
 
         {
@@ -47,7 +45,7 @@ namespace Model {
                 file_data.data(),
                 file_data.size(),
                 assimp_process_flags,
-                &(*file_extension.begin()));
+                file_extension.data());
 
             if (assimp_scene == nullptr) {
                 return Utily::Error {

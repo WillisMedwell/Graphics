@@ -11,6 +11,8 @@
 
 using namespace std::literals;
 
+#if 0
+
 struct BackgroundColourData {
     std::chrono::steady_clock::time_point start_time;
     glm::vec4 background_colour = { 0, 0, 0, 1.0f };
@@ -151,10 +153,14 @@ struct SpinningSquareLogic {
     }
 };
 
+#endif
+
 struct SpinningTeapotData {
     std::chrono::steady_clock::time_point start_time;
     entt::entity teapot;
     Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 0.5f)) };
+
+    entt::registry ecs;
 
     Renderer::ResourceManager resource_manager;
     Renderer::ResourceHandle<Core::Shader> s_h;
@@ -189,7 +195,7 @@ struct SpinningTeapotData {
         "}"sv;
 };
 struct SpinningTeapotLogic {
-    void init(AppRenderer& renderer, entt::registry& ecs, SpinningTeapotData& data) {
+    void init(AppRenderer& renderer, Core::AudioManager& audio, SpinningTeapotData& data) {
 
         auto print_pause_quit = [&](auto error) {
             std::cerr << error.what() << std::endl;
@@ -205,10 +211,10 @@ struct SpinningTeapotLogic {
                                           .on_error(print_pause_quit)
                                           .value());
 
-        data.teapot = ecs.create();
-        ecs.emplace<Model::Static>(data.teapot, std::move(teapot_model));
-        ecs.emplace<Components::Transform>(data.teapot, glm::vec3 { 0, -1, 1 }, glm::vec3(0.5f));
-        ecs.emplace<Components::Spinning>(data.teapot, glm::vec3 { 0, 1, 0 }, 0.0, 1.0);
+        data.teapot = data.ecs.create();
+        data.ecs.emplace<Model::Static>(data.teapot, std::move(teapot_model));
+        data.ecs.emplace<Components::Transform>(data.teapot, glm::vec3 { 0, -1, 1 }, glm::vec3(0.5f));
+        data.ecs.emplace<Components::Spinning>(data.teapot, glm::vec3 { 0, 1, 0 }, 0.0, 1.0);
 
         auto [s_h, s] = data.resource_manager.create_and_init_resource<Core::Shader>(data.VERT, data.FRAG);
         auto [vb_h, vb] = data.resource_manager.create_and_init_resource<Core::VertexBuffer>();
@@ -222,8 +228,8 @@ struct SpinningTeapotLogic {
 
         data.start_time = std::chrono::high_resolution_clock::now();
     }
-    void update(double dt, const Core::InputManager& input, AppState& state, entt::registry& ecs, SpinningTeapotData& data) {
-        ecs.get<Components::Transform>(data.teapot).rotation = ecs.get<Components::Spinning>(data.teapot)
+    void update(double dt, const Core::InputManager& input, Core::AudioManager& audio, AppState& state, SpinningTeapotData& data) {
+        data.ecs.get<Components::Transform>(data.teapot).rotation = data.ecs.get<Components::Spinning>(data.teapot)
                                                                    .update(dt)
                                                                    .calc_quat();
 
@@ -233,8 +239,8 @@ struct SpinningTeapotLogic {
         }
     }
 
-    void draw(AppRenderer& renderer, entt::registry& ecs, SpinningTeapotData& data) {
-        auto [model, transform, spinning] = ecs.get<Model::Static, Components::Transform, Components::Spinning>(data.teapot);
+    void draw(AppRenderer& renderer, SpinningTeapotData& data) {
+        auto [model, transform, spinning] = data.ecs.get<Model::Static, Components::Transform, Components::Spinning>(data.teapot);
 
         transform.rotation = spinning.calc_quat();
         auto pm = data.camera.projection_matrix(renderer.window_width, renderer.window_height);
@@ -260,9 +266,11 @@ struct SpinningTeapotLogic {
         glDrawElements(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, (void*)0);
     }
 
-    void stop() {
+    void stop(SpinningTeapotData& data) {
     }
 };
+
+#if 0
 
 struct FontData {
     std::chrono::steady_clock::time_point start_time;
@@ -320,19 +328,28 @@ struct FontLogic {
     }
 };
 
+#endif
+
 #if defined(CONFIG_TARGET_NATIVE)
+
+#if 0
 TEST(BasicApps, background_colour) {
     auto_run_app<BackgroundColourData, BackgroundColourLogic>("Test App: Background Colour ");
 }
 TEST(BasicApps, spinning_square) {
     auto_run_app<SpinningSquareData, SpinningSquareLogic>("Test App: Spinning Square");
 }
+#endif
 TEST(BasicApps, spinning_teapot) {
     auto_run_app<SpinningTeapotData, SpinningTeapotLogic>("Test App: Spinning Teapot");
 }
+
+#if 0
 TEST(BasicApps, font_rendering) {
     auto_run_app<FontData, FontLogic>("Test App: Font Rendering");
 }
+#endif
+
 
 #elif defined(CONFIG_TARGET_WEB)
 

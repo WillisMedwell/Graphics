@@ -96,11 +96,12 @@ namespace Core {
             bytes_per_pixel = 1;
             gl_format = GL_RED;
         } else {
-            gl_format = GL_RGBA8;
+            gl_format = GL_RGBA;
             bytes_per_pixel = 4;
         }
         const void* img_data = reinterpret_cast<const void*>(image.raw_bytes().data());
         glPixelStorei(GL_UNPACK_ALIGNMENT, bytes_per_pixel);
+
         glTexImage2D(GL_TEXTURE_2D, 0, (GLint)image.format(), image.dimensions().x, image.dimensions().y, 0, gl_format, GL_UNSIGNED_BYTE, img_data);
 
         if (offload_image_on_success) {

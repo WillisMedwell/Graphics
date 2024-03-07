@@ -17,7 +17,7 @@ find_package(Bullet CONFIG REQUIRED)
 find_package(lodepng CONFIG REQUIRED) 
 find_package(Stb REQUIRED)
 find_package(Freetype REQUIRED)
-
+find_package(SPNG CONFIG REQUIRED)
 
 include(FetchContent)
 
@@ -35,9 +35,10 @@ endif()
 
 target_precompile_headers(Engine PRIVATE include/EnginePch.hpp)
 
+
 if(DEFINED EMSCRIPTEN)
     target_link_libraries(Engine PUBLIC 
-        glm::glm assimp::assimp EnTT::EnTT Utily::Utily Freetype::Freetype lodepng ${BULLET_LIBRARIES} 
+        glm::glm assimp::assimp EnTT::EnTT Utily::Utily Freetype::Freetype lodepng ${BULLET_LIBRARIES} $<IF:$<TARGET_EXISTS:spng::spng>,spng::spng,spng::spng_static>
     )
     target_include_directories(Engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${Stb_INCLUDE_DIR})
     target_compile_options(Engine PUBLIC 
@@ -55,7 +56,7 @@ else()
     find_package(GLFW3 CONFIG REQUIRED)
     find_package(GLEW REQUIRED)
     target_link_libraries(Engine PUBLIC 
-        glm::glm assimp::assimp EnTT::EnTT Utily::Utily Freetype::Freetype lodepng ${BULLET_LIBRARIES} 
+        glm::glm assimp::assimp EnTT::EnTT Utily::Utily Freetype::Freetype lodepng ${BULLET_LIBRARIES} $<IF:$<TARGET_EXISTS:spng::spng>,spng::spng,spng::spng_static>
         OpenGL::GL OpenAL::OpenAL GLEW::GLEW glfw 
     )
     if(MSVC)

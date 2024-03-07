@@ -4,6 +4,7 @@
 
 #include <format>
 #include <lodepng.h>
+#include <spng.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
@@ -60,7 +61,7 @@ namespace Media {
                 _format = ColourFormat::rgb;
             }
         }
-
+#if 0 // Use LodePng
         auto asLodeFormat = [](ColourFormat format) -> LodePNGColorType {
             switch (format) {
             case ColourFormat::rgb:
@@ -89,6 +90,20 @@ namespace Media {
                 };
             }
         }
+#else // Use spng
+        Profiler::Timer lode_timer("spng::decode_image()");
+
+        spng_ctx* ctx = spng_ctx_new(0);
+        spng_set_png_buffer(ctx, encoded_png.data(), encoded_png.size());
+        
+        size_t out_size = 0;
+        spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &out_size);
+        _data.resize(out_size);
+
+        spng_decode_image(ctx, _data.data(), _data.size(), SPNG_FMT_RGBA8, 0);
+        spng_ctx_free(ctx);
+        this->_format = Media::ColourFormat::rgba;
+#endif
         _data.shrink_to_fit();
         return {};
     }
@@ -133,7 +148,6 @@ namespace Media {
         _width = 0;
         _height = 0;
     }
-
 
     void Image::add_fence(Core::Fence&& fence) noexcept {
         _fence.emplace(std::forward<Core::Fence>(fence));

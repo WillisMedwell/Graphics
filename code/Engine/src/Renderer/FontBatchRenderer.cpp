@@ -7,17 +7,23 @@ namespace Renderer {
         "precision highp float;\n"
         "layout(location = 0) in vec2 l_pos;\n"
         "layout(location = 1) in vec2 l_uv;\n"
+        
         "out vec2 uv;\n"
+        
         "void main() {\n"
         "    gl_Position = vec4(l_pos, 0, 1.0);\n"
         "    uv = l_uv;\n"
         "}";
     constexpr static std::string_view FBR_SHADER_FRAG_SRC =
         "precision highp float;\n"
+
         "uniform sampler2D u_texture;\n"
         "uniform vec4 u_colour;\n"
+
         "in vec2 uv;\n"
+        
         "out vec4 FragColor;\n"
+        
         "void main() {\n"
         "    vec2 uv_flipped = vec2(uv.x, 1.0f - uv.y);\n"
         "    float r = texture(u_texture, uv_flipped).r;"

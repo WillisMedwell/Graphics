@@ -15,4 +15,4 @@ namespace Renderer {
 #include "Renderer/ResourceManager.hpp"
 #include "Renderer/FontRenderer.hpp"
 #include "Renderer/FontBatchRenderer.hpp"
-
+#include "Renderer/InstanceRenderer.hpp"

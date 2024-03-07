@@ -14,7 +14,7 @@ namespace Model {
 
     auto decode_as_static_model(
         std::span<uint8_t> file_data,
-        Utily::StaticVector<char, 16> file_extension)
+        std::string_view file_extension)
         -> Utily::Result<Static, Utily::Error>;
 
     auto join(Static&& lhs, Static&& rhs) -> Model::Static;

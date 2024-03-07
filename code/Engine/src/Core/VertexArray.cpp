@@ -8,19 +8,6 @@ namespace Core {
         : _id(std::exchange(other._id, std::nullopt)) {
     }
 
-    // auto VertexArray::init() noexcept -> Utily::Result<void, Utily::Error> {
-    //     if (_id) {
-    //         return Utily::Error { "Trying to override in-use Vertex Array Object" };
-    //     }
-    //     _id = INVALID_ARRAY_OBJECT_ID;
-    //     glGenVertexArrays(1, &_id.value());
-    //     if (_id.value() == INVALID_ARRAY_OBJECT_ID) {
-    //         _id = std::nullopt;
-    //         return Utily::Error { "Failed to create Vertex Array Object. glGenVertexArrays failed." };
-    //     }
-    //     return {};
-    // }
-
     void VertexArray::stop() noexcept {
         Core::DebugOpRecorder::instance().push("Core::VertexArray", "stop()");
 

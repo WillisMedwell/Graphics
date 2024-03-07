@@ -9,6 +9,7 @@
         "stb",
         "freetype",
         "drlibs",
+        "libspng",
         {
             "name": "opengl",
             "platform": "!emscripten"

@@ -407,6 +407,9 @@ struct IsoData {
     Core::AudioManager::SourceHandle source_handle;
 
     Components::Spinning spinning;
+
+    Renderer::ResourceManager resource_manager;
+    Renderer::InstanceRenderer instance_renderer;
 };
 struct IsoLogic {
     void init(AppRenderer& renderer, Core::AudioManager& audio, IsoData& data) {
@@ -427,14 +430,33 @@ struct IsoLogic {
 
         data.source_handle = audio.play_sound(data.sound_buffer).on_error(print_then_quit).value();
         data.start_time = std::chrono::high_resolution_clock::now();
+
+        auto model_data = std::move(
+            Utily::FileReader::load_entire_file("assets/teapot.obj")
+                .on_error(print_then_quit)
+                .value());
+        auto model = std::move(
+            Model::decode_as_static_model(model_data, ".obj")
+                .on_error(print_then_quit)
+                .value());
+
+        auto image_png = std::move(
+            Utily::FileReader::load_entire_file("assets/texture.png")
+                .on_error(print_then_quit)
+                .value());
+        auto image = Media::Image {};
+        image.init(image_png, true, false)
+            .on_error(print_then_quit);
+
+        data.instance_renderer.init(data.resource_manager, model, image);
     }
 
     void update(float dt, const Core::InputManager& input, Core::AudioManager& audio, AppState& state, IsoData& data) {
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
-        
-         if (duration > std::chrono::seconds(3) {
-             state.should_close = true;
-         }
+
+        if (duration > std::chrono::seconds(3)) {
+            state.should_close = true;
+        }
 
         data.spinning.update(dt);
         auto quat = data.spinning.calc_quat();
@@ -456,7 +478,6 @@ struct IsoLogic {
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
     }
     void stop(IsoData& data) {
-
     }
 };
 
