@@ -33,6 +33,11 @@ namespace Media {
         }
         constexpr static auto IS_CHAR_DRAWABLE = gen_is_char_drawable_table();
     }
+}
+
+#if 0
+
+namespace Media {
 
     class Font;
 
@@ -87,3 +92,41 @@ namespace Media {
         auto generate_static_mesh(std::string_view str, const float char_height, const glm::vec2 bottom_left_pos, const FontAtlas& atlas) -> std::tuple<std::array<Model::Vertex2D, 400>, std::array<Model::Index, 600>>;
     }
 }
+
+#else
+
+namespace Media {
+
+    class FontAtlas
+    {
+    public:
+        /// @brief Load .ttf font from disk. Generate a font-atlas image. Can fail.
+        static auto create(std::filesystem::path path) noexcept -> Utily::Result<FontAtlas, Utily::Error>;
+
+        FontAtlas(FontAtlas&& other)
+            : _m(std::move(other.m)) { }
+
+        auto uv_for(char c) const noexcept -> glm::vec2;
+
+    private:
+        struct M {
+            const Media::Image atlas_image;
+            const glm::vec2 atlas_layout;
+            const glm::vec2 glyph_dimensions;
+        } _m;
+
+        explicit FontAtlas(M m)
+            : _m(std::move(m)) { }
+
+        constexpr static auto PRINTABLE_CHARS = []() {
+            constexpr char first_printable = char(32);
+            constexpr char last_printable = char(127);
+            constexpr size_t n = last_printable - first_printable;
+            std::array<char, n> chars {};
+            std::ranges::copy(std::views::iota(first_printable, last_printable), chars.begin());
+            return chars;
+        }();
+    };
+}
+
+#endif

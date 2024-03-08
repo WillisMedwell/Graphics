@@ -36,6 +36,7 @@ struct FreeType {
 
 static FreeType free_type {};
 
+#if 0
 namespace Media {
     auto FontAtlas::operator=(FontAtlas&& other) noexcept -> FontAtlas& {
         this->image = std::move(other.image);
@@ -300,5 +301,83 @@ namespace Media {
             *(i_ptr[5] + i_offset) = v_offset + 0;
         }
         return std::tuple { vertices, indices };
+    }
+}
+
+#endif
+
+namespace Media {
+    auto FontAtlas::create(std::filesystem::path path, uint32_t chat_height_px) noexcept -> Utily::Result<FontAtlas, Utily::Error> {
+        // 1. Load ttf file from disk.
+        // 2. Initalise the freetype font face
+        // 3. Generate and cache the bitmap for each glyph.
+        // 4. Determine the most compact atlas dimensions.
+
+        // 1.
+        auto file_load_result = Utily::FileReader::load_entire_file(path);
+        if (file_load_result.has_error()) {
+            return file_load_result.error();
+        }
+        const auto& encoded_ttf = file_load_result.value();
+
+        // 2.
+        FT_Face ft_face = nullptr;
+        if (auto error = FT_New_Memory_Face(free_type.library, encoded_ttf.data(), encoded_ttf.size(), 0, &ft_face); error) {
+            return Utily::Error { FT_Error_String(error) };
+        }
+        if (auto error = FT_Set_Pixel_Sizes(ft_face, 0, char_height_px); error) {
+            return Utily::Error { FT_Error_String(error) };
+        }
+
+        // 3.
+        struct GlyphDimensions {
+            glm::uvec2 bitmap_dimensions = { 0, 0 };
+            uint32_t spanline = 0;
+            uint32_t left_padding = 0;
+        };
+        struct CachedGlyph {
+            char c;
+            std::vector<uint8_t> bitmap;
+            GlyphDimensions dimensions;
+        };
+        auto create_cached_glyph = [&](char c) {
+            auto glyph_index = FT_Get_Char_Index(ft_face, static_cast<std::uint32_t>(c));
+            FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT);
+            FT_Render_Glyph(ft_face->glyph, FT_Render_Mode::FT_RENDER_MODE_NORMAL);
+            auto glyph_bitmap = std::span {
+                ft_face->glyph->bitmap.buffer,
+                ft_face->glyph->bitmap.width * ft_face->glyph->bitmap.rows
+            };
+            return CachedGlyph {
+                .c = c,
+                .bitmap = { glyph_bitmap.begin(), glyph_bitmap.end() },
+                .dimensions = GlyphDimensions {
+                    .bitmap_dimensions = { ft_face->glyph->bitmap.width, ft_face->glyph->bitmap.rows },
+                    .spanline = { ft_face->glyph->bitmap_top },
+                    .left_padding = { ft_face->glyph->bitmap_left },
+                }
+            };
+        };
+        std::array<CachedGlyph, PRINTABLE_CHARS.size()> cached_glyphs;
+        std::transform(PRINTABLE_CHARS.begin(), PRINTABLE_CHARS.end(), cached_glyphs.begin(), create_cached_glyph);
+
+        // 4.
+        auto take_max_dimensions = [](AtlasGlyphDimensions&& agg, const CachedGlyph& cg) {
+            return AtlasGlyphDimensions {
+                
+
+                // .bitmap_dimensions = {
+                //     std::max(agg.bitmap_dimensions.x, cg.bitmap_dimensions),
+                //     std::max(agg.)
+                // },
+                //.spanline = std::max(cg.spanline, agg.spanline), .left_padding = std::max(cg.left_padding, agg.left_padding),
+            };
+        };
+        const auto atlas_glyph_dimensions = std::reduce(cached_glyphs.begin(), cached_glyphs.end(), AtlasGlyphDimensions {}, take_max_dimensions);
+
+        return FontAtlas(M { .atlas_image = std::move(image), .atlas_layout = {}, .glyph_dimensions = {} });
+    }
+    auto FontAtlas::uv_for(char c) const noexcept -> glm::vec2 {
+        return {};
     }
 }

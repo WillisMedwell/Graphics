@@ -410,6 +410,8 @@ struct IsoData {
 
     Renderer::ResourceManager resource_manager;
     Renderer::InstanceRenderer instance_renderer;
+
+    Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 0.5f)) };
 };
 struct IsoLogic {
     void init(AppRenderer& renderer, Core::AudioManager& audio, IsoData& data) {
@@ -427,9 +429,6 @@ struct IsoLogic {
         data.spinning.axis_of_rotation = { 0, 1, 0 };
         data.spinning.angle = 0;
         data.spinning.rotations_per_second = 1;
-
-        data.source_handle = audio.play_sound(data.sound_buffer).on_error(print_then_quit).value();
-        data.start_time = std::chrono::high_resolution_clock::now();
 
         auto model_data = std::move(
             Utily::FileReader::load_entire_file("assets/teapot.obj")
@@ -449,6 +448,9 @@ struct IsoLogic {
             .on_error(print_then_quit);
 
         data.instance_renderer.init(data.resource_manager, model, image);
+
+        data.source_handle = audio.play_sound(data.sound_buffer, { 5, 0, 0 }).on_error(print_then_quit).value();
+        data.start_time = std::chrono::high_resolution_clock::now();
     }
 
     void update(float dt, const Core::InputManager& input, Core::AudioManager& audio, AppState& state, IsoData& data) {
@@ -470,12 +472,27 @@ struct IsoLogic {
         lp.dir = { 0, 0, 1 };
         lp.vel = { 0, 0, 0 };
         audio.set_listener_properties(lp);
+
+        auto t = Components::Transform {};
+        t.position = glm::vec3(0, -1, 1);
+        t.scale = glm::vec3(0.5f);
+
+        auto model = t.calc_transform_mat();
+        data.instance_renderer.push_instance(model);
+
+        t.position = glm::vec3(0, -1, 2);
+        model = t.calc_transform_mat();
+        data.instance_renderer.push_instance(model);
     }
 
     void draw(AppRenderer& renderer, IsoData& data) {
         renderer.screen_frame_buffer.bind();
         renderer.screen_frame_buffer.clear(data.background_colour);
         renderer.screen_frame_buffer.resize(renderer.window_width, renderer.window_height);
+
+        auto v = data.camera.view_matrix();
+        auto p = data.camera.projection_matrix(renderer.window_width, renderer.window_height);
+        data.instance_renderer.draw_instances(data.resource_manager, v, p);
     }
     void stop(IsoData& data) {
     }

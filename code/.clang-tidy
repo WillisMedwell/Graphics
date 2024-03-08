@@ -11,11 +11,12 @@ CheckOptions:
   - { key: readability-identifier-naming.VariableCase, value: lower_case }
   - { key: readability-identifier-naming.FunctionCase, value: lower_case }
   - { key: readability-identifier-naming.StructCase, value: CamelCase  }
+  - { key: readability-identifier-naming.MemberVariableCase, value: snake_case }
+  - { key: readability-identifier-naming.ConstantMemberCase, value: snake_case }
   - { key: readability-identifier-naming.ClassCase, value: CamelCase  }
   - { key: readability-identifier-naming.MethodCase, value: lower_case  }
   - { key: readability-identifier-naming.PrivateMemberPrefix, value: _ }
   - { key: readability-identifier-naming.StaticMemberPrefix, value: _ }
-  - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
   - { key: readability-identifier-naming.LocalConstantCase, value: lower_case }
   - { key: readability-identifier-naming.GlobalConstantCase, value: UPPER_CASE }
   - { key: readability-identifier-naming.EnumConstantCase, value: lower_case }

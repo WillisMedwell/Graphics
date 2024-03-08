@@ -10,6 +10,7 @@
 
 #include <glm/vec2.hpp>
 
+#if 0
 namespace Media {
 
     enum class ColourFormat : uint32_t {
@@ -59,5 +60,42 @@ namespace Media {
         Media::ColourFormat _format = Media::ColourFormat::rgb;
         uint32_t _width { 0 }, _height { 0 };
         std::optional<Core::Fence> _fence;
+    };
+}
+#endif
+
+namespace Media {
+    class Image
+    {
+    public:
+        enum class InternalFormat {
+            undefined = 0,
+            greyscale,
+            rgba
+        };
+
+        /// @brief Load png image from disk and decode it. Can fail.
+        [[nodiscard]] static auto create(std::filesystem::path path)
+            -> Utily::Result<Image, Utily::Error>;
+        /// @brief Take decoded-raw image data and copy it. Can fail.
+        [[nodiscard]] static auto create(std::span<uint8_t> raw_bytes, glm::uvec2 dimensions, InternalFormat format)
+            -> Utily::Result<Image, Utily::Error>;
+
+        Image(Image&& other);
+
+        [[nodiscard]] inline auto raw_bytes() const noexcept { return std::span { _m.data.get(), _m.data_size_bytes }; }
+        [[nodsicard]] inline auto dimensions() const noexcept { return _m.dimensions; }
+        [[nodiscard]] auto opengl_format() const -> uint32_t;
+
+    private:
+        struct M {
+            std::unique_ptr<uint8_t[]> data = {};
+            size_t data_size_bytes = 0;
+            glm::uvec2 dimensions = { 0, 0 };
+            InternalFormat format = InternalFormat::undefined;
+        } _m;
+
+        explicit Image(M m)
+            : _m(std::move(m)) { }
     };
 }

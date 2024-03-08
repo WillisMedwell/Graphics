@@ -9,6 +9,7 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb_image_resize.h>
 
+#if 0
 namespace Media {
     Image::Image(Image&& other)
         : _data(std::move(other._data))
@@ -95,7 +96,7 @@ namespace Media {
 
         spng_ctx* ctx = spng_ctx_new(0);
         spng_set_png_buffer(ctx, encoded_png.data(), encoded_png.size());
-        
+
         size_t out_size = 0;
         spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &out_size);
         _data.resize(out_size);
@@ -195,4 +196,102 @@ namespace Media {
         _width = width;
         _height = height;
     }
+}
+#endif
+
+namespace Media {
+    auto Image::create(std::filesystem::path path) -> Utily::Result<Image, Utily::Error> {
+        // 1. Load the file contents into memory.
+        // 2. Decode the file contents via libspng.
+        // 3. Construct a valid Image instance.
+
+        // 1.
+        if (path.extension() != ".png") {
+            return Utily::Error("Invalid extension for image, .png is the only supported file type.");
+        }
+        auto load_file_result = Utily::FileReader::load_entire_file(path);
+        if (load_file_result.has_error()) {
+            return load_file_result.error();
+        }
+        const auto& encoded_png = load_file_result.value();
+
+        // 2.
+        spng_ctx* ctx = spng_ctx_new(0);
+        int spng_error = 0;
+        spng_error = spng_set_png_buffer(ctx, encoded_png.data(), encoded_png.size());
+        if (spng_error) {
+            return Utily::Error(std::string(png_strerror(spng_error)));
+        }
+        size_t data_size_bytes = 0;
+        spng_error = spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &data_size_bytes);
+        if (spng_error) {
+            return Utily::Error(std::string(png_strerror(spng_error)));
+        }
+        auto data = std::make_unique_for_overwrite<uint8_t[]>(image_size);
+        spng_error = spng_decode_image(ctx, data.get(), data_size_bytes, SPNG_FMT_RGBA8, 0);
+        if (spng_error) {
+            return Utily::Error(std::string(png_strerror(spng_error)));
+        }
+        spng_ihdr idhr;
+        spng_error = spng_get_ihdr(ctx, idhr);
+        if (spng_error) {
+            return Utily::Error(std::string(png_strerror(spng_error)));
+        }
+        spng_ctx_free(ctx);
+
+        // 3.
+        return Image(M {
+            .data = std::move(data),
+            .data_size_bytes = data_size_bytes,
+            .dimensions = { idhr.width, idhr.height },
+            .format = InternalFormat::rgba });
+    }
+    auto Image::create(std::span<const uint8_t> raw_bytes, glm::uvec2 dimensions, InternalFormat format) -> Utily::Result<Image, Utily::Error> {
+        // 1. Check given raw sizes.
+        // 2. Allocate resources.
+        // 3. Copy.
+        // 4. Construct valid Image instance.
+
+        // 1.
+        size_t expected_size = = dimensions.x * dimensions.y;
+        if (format == InternalFormat::rgba) {
+            expected_size *= 4;
+        } else if (format == InternalFormat::undefined) {
+            return Utily::Error("Undefined format param");
+        }
+        if (expected_size != raw_bytes.size()) {
+            return Utily::Error("The raw data is not the expected size for those dimensions and format");
+        }
+
+        // 2.
+        auto data = std::make_unique_for_overwrite<uint8_t[]>(raw_bytes.size());
+        auto data_size_bytes = raw_bytes.size();
+
+        // 3.
+        std::uninitialized_copy(raw_bytes.cbegin(), raw_bytes.cend(), data.get());
+
+        // 4.
+        return Image(M {
+            .data = std::move(data),
+            .data_size_bytes = data_size_bytes,
+            .dimensions = dimensions,
+            .format = format });
+    }
+    
+    auto Image::opengl_format() const -> uint32_t {
+        switch (_m.format) {
+        case InternalFormat::greyscale:
+            return GL_R8;
+        case InternalFormat::rgba:
+            return GL_RGBA8;
+        case InternalFormat::undefined:
+            [[fallthrough]];
+        default:
+            throw std::runtime_error("Invalid internal format enum state.");
+            return std::numeric_limits<uint32_t>::max();
+        }
+    }
+
+    Image::Image(Image&& other)
+        : _m(std::move(m)) { }
 }

@@ -1,32 +1,6 @@
 #include "Renderer/InstanceRenderer.hpp"
 
 namespace Renderer {
-
-    // constexpr static std::string_view FBR_SHADER_VERT_SRC =
-    //     "precision highp float;\n"
-    //     "layout(location = 0) in vec2 l_pos;\n"
-    //     "layout(location = 1) in vec2 l_uv;\n"
-    //     "out vec2 uv;\n"
-    //     "void main() {\n"
-    //     "    gl_Position = vec4(l_pos, 0, 1.0);\n"
-    //     "    uv = l_uv;\n"
-    //     "}";
-    // constexpr static std::string_view FBR_SHADER_FRAG_SRC =
-    //     "precision highp float;\n"
-    //     "uniform sampler2D u_texture;\n"
-    //     "uniform vec4 u_colour;\n"
-    //     "in vec2 uv;\n"
-    //     "out vec4 FragColor;\n"
-    //     "void main() {\n"
-    //     "    vec2 uv_flipped = vec2(uv.x, 1.0f - uv.y);\n"
-    //     "    float r = texture(u_texture, uv_flipped).r;"
-    //     "    if(r > 0.1f) {\n"
-    //     "        FragColor = vec4(u_colour.rgb, r * u_colour.a);\n"
-    //     "    } else {\n"
-    //     "        FragColor = vec4(0,0,0,0);"
-    //     "    }\n"
-    //     "}";
-
     constexpr static std::string_view INSTANCE_SHADER_VERT_SRC =
         "precision highp float;\n"
         "layout(location = 0) in vec3 l_pos;\n"
@@ -44,7 +18,7 @@ namespace Renderer {
 
         "void main() {\n"
         "    mat4 m = mat4(l_inst_col_0, l_inst_col_1, l_inst_col_2, l_inst_col_3);"
-        "    mat4 mvp = u_view * u_proj * m;\n"
+        "    mat4 mvp = u_proj * u_view * m;\n"
         "    gl_Position =  mvp * vec4(l_pos, 1);\n"
         "    uv = l_uv;\n"
         "}";
@@ -58,8 +32,7 @@ namespace Renderer {
         "        FragColor = texture(u_texture, uv);\n"
         "}";
 
-        void
-        InstanceRenderer::init(ResourceManager & resource_manager, const Model::Static& model, Media::Image& image) {
+    void InstanceRenderer::init(ResourceManager& resource_manager, const Model::Static& model, Media::Image& image) {
         auto [ib_handle, ib] = resource_manager.create_and_init_resource<Core::IndexBuffer>();
         auto [vb_mesh_handle, vb_mesh] = resource_manager.create_and_init_resource<Core::VertexBuffer>();
         auto [vb_tran_handle, vb_tran] = resource_manager.create_and_init_resource<Core::VertexBuffer>();
@@ -74,13 +47,41 @@ namespace Renderer {
         _vb_transforms = vb_tran_handle;
         _ib = ib_handle;
         _va = va_handle;
+
+        vb_mesh.bind();
+        vb_mesh.load_vertices(model.vertices);
+
+        ib.bind();
+        ib.load_indices(model.indices);
+
+        va.unbind();
     }
     void InstanceRenderer::stop(ResourceManager& resource_manager) {
     }
     void InstanceRenderer::push_instance(const glm::mat4& instance_transformation) {
         _current_instances.emplace_back(instance_transformation);
     }
-    void InstanceRenderer::draw_instances(ResourceManager& resource_manager, glm::vec2 screen_dimensions) {
+    void InstanceRenderer::draw_instances(ResourceManager& resource_manager, const glm::mat4& projection, const glm::mat4& view) {
+        auto [s, t, ib, vbm, vbt, va] = resource_manager.get_resources(_s, _t, _ib, _vb_mesh, _vb_transforms, _va);
+
+        auto transfrom_verts = std::span {
+            reinterpret_cast<const float*>(_current_instances.data()),
+            _current_instances.size() * 16
+        };
+        va.bind();
+        ib.bind();
+        vbt.bind();
+        vbt.load_vertices(transfrom_verts);
+        vbm.bind();
+        s.bind();
+        s.set_uniform("u_view", view).on_error(Panic{});
+        s.set_uniform("u_proj", projection).on_error(Panic{});
+
+        int32_t t_id = static_cast<int32_t>(t.bind().on_error(Panic {}).value());
+        s.set_uniform("u_texture", t_id);
+        glDrawElementsInstanced(GL_TRIANGLES, ib.get_count(), GL_UNSIGNED_INT, 0, _current_instances.size());
+        va.unbind();
+        _current_instances.clear();
     }
 
 }
