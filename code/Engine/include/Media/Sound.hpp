@@ -24,7 +24,7 @@ namespace Media {
             stereo16 = AL_FORMAT_STEREO16
         };
 
-        [[nodiscard]] auto init_from_wav(const std::vector<uint8_t>& encoded_wav) -> Utily::Result<void, Utily::Error>;
+        [[nodiscard]] static auto create(std::filesystem::path wav_path) noexcept -> Utily::Result<Sound, Utily::Error>;
 
         inline static auto to_openal_format(const Format& format) -> FormatOpenal {
             if (format == Format::mono_i16) {
@@ -36,14 +36,18 @@ namespace Media {
             }
         }
 
-        [[nodiscard]] inline auto raw_bytes() const noexcept -> std::span<const int16_t> { return { _data.cbegin(), _data.cend() }; }
-        [[nodiscard]] inline auto frequency() const noexcept -> size_t { return _frequency; }
-        [[nodiscard]] inline auto openal_format() const noexcept -> FormatOpenal { return to_openal_format(_format); }
+        [[nodiscard]] inline auto raw_bytes() const noexcept -> std::span<const int16_t> { return { _m.data.cbegin(), _m.data.cend() }; }
+        [[nodiscard]] inline auto frequency() const noexcept -> size_t { return _m.frequency; }
+        [[nodiscard]] inline auto openal_format() const noexcept -> FormatOpenal { return to_openal_format(_m.format); }
 
     private:
-        std::vector<int16_t> _data = {};
-        size_t _data_size_bytes = 0;
-        size_t _frequency = 0;
-        Format _format = {};
+        struct M {
+            std::vector<int16_t> data;
+            size_t frequency;
+            Format format;
+        } _m;
+
+        explicit Sound(M&& m)
+            : _m(std::move(m)) { }
     };
 }

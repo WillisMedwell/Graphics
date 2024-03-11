@@ -420,11 +420,10 @@ struct IsoLogic {
 
         std::cout << std::thread::hardware_concurrency() << '\n';
 
-        Media::Sound sound {};
+        /*Media::Sound sound {};*/
 
-        auto wav_file_data = Utily::FileReader::load_entire_file("assets/background_sound.wav");
-        wav_file_data.on_error(print_then_quit);
-        sound.init_from_wav(wav_file_data.value()).on_error(print_then_quit);
+        Media::Sound sound = Media::Sound::create("assets/background_sound.wav").on_error_panic().value_move();
+
 
         auto res = audio.load_sound_into_buffer(sound).on_error(print_then_quit);
 
