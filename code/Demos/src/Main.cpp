@@ -411,10 +411,14 @@ struct IsoData {
     Renderer::ResourceManager resource_manager;
     Renderer::InstanceRenderer instance_renderer;
 
+    std::optional<Renderer::FontBatchRenderer> font_batch_renderer;
+
     Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 0.5f)) };
 };
 struct IsoLogic {
     void init(AppRenderer& renderer, Core::AudioManager& audio, IsoData& data) {
+
+        std::cout << std::thread::hardware_concurrency() << '\n';
 
         Media::Sound sound {};
 
@@ -430,22 +434,22 @@ struct IsoLogic {
         data.spinning.angle = 0;
         data.spinning.rotations_per_second = 1;
 
-        auto model_data = std::move(
-            Utily::FileReader::load_entire_file("assets/teapot.obj")
-                .on_error(print_then_quit)
-                .value());
-        auto model = std::move(
-            Model::decode_as_static_model(model_data, ".obj")
-                .on_error(print_then_quit)
-                .value());
+        auto model_data = Utily::FileReader::load_entire_file("assets/teapot.obj")
+                              .on_error_panic()
+                              .value_move();
+        auto model = Model::decode_as_static_model(model_data, ".obj")
+                         .on_error_panic()
+                         .value_move();
+        auto image = Media::Image::create("assets/texture.png")
+                         .on_error_panic()
+                         .value_move();
 
-        auto image_png = std::move(
-            Utily::FileReader::load_entire_file("assets/texture.png")
-                .on_error(print_then_quit)
-                .value());
-        auto image = Media::Image {};
-        image.init(image_png, true, false)
-            .on_error(print_then_quit);
+        data.font_batch_renderer.emplace(Renderer::FontBatchRenderer::create(data.resource_manager, "assets/RobotoMono.ttf")
+                                             .on_error_panic()
+                                             .value_move());
+
+        auto font_atlas = Media::FontAtlas::create("assets/RobotoMono.ttf", 500).on_error_panic().value_move();
+        font_atlas.atlas_image().save_to_disk("RobotoMonoAtlas.png");
 
         data.instance_renderer.init(data.resource_manager, model, image);
 

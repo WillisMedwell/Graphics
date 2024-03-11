@@ -220,22 +220,22 @@ namespace Media {
         int spng_error = 0;
         spng_error = spng_set_png_buffer(ctx, encoded_png.data(), encoded_png.size());
         if (spng_error) {
-            return Utily::Error(std::string(png_strerror(spng_error)));
+            return Utily::Error(std::string(spng_strerror(spng_error)));
         }
         size_t data_size_bytes = 0;
         spng_error = spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &data_size_bytes);
         if (spng_error) {
-            return Utily::Error(std::string(png_strerror(spng_error)));
+            return Utily::Error(std::string(spng_strerror(spng_error)));
         }
-        auto data = std::make_unique_for_overwrite<uint8_t[]>(image_size);
+        auto data = std::make_unique_for_overwrite<uint8_t[]>(data_size_bytes);
         spng_error = spng_decode_image(ctx, data.get(), data_size_bytes, SPNG_FMT_RGBA8, 0);
         if (spng_error) {
-            return Utily::Error(std::string(png_strerror(spng_error)));
+            return Utily::Error(std::string(spng_strerror(spng_error)));
         }
         spng_ihdr idhr;
-        spng_error = spng_get_ihdr(ctx, idhr);
+        spng_error = spng_get_ihdr(ctx, &idhr);
         if (spng_error) {
-            return Utily::Error(std::string(png_strerror(spng_error)));
+            return Utily::Error(std::string(spng_strerror(spng_error)));
         }
         spng_ctx_free(ctx);
 
@@ -253,7 +253,7 @@ namespace Media {
         // 4. Construct valid Image instance.
 
         // 1.
-        size_t expected_size = = dimensions.x * dimensions.y;
+        size_t expected_size = dimensions.x * dimensions.y;
         if (format == InternalFormat::rgba) {
             expected_size *= 4;
         } else if (format == InternalFormat::undefined) {
@@ -262,14 +262,11 @@ namespace Media {
         if (expected_size != raw_bytes.size()) {
             return Utily::Error("The raw data is not the expected size for those dimensions and format");
         }
-
         // 2.
         auto data = std::make_unique_for_overwrite<uint8_t[]>(raw_bytes.size());
         auto data_size_bytes = raw_bytes.size();
-
         // 3.
         std::uninitialized_copy(raw_bytes.cbegin(), raw_bytes.cend(), data.get());
-
         // 4.
         return Image(M {
             .data = std::move(data),
@@ -277,7 +274,7 @@ namespace Media {
             .dimensions = dimensions,
             .format = format });
     }
-    
+
     auto Image::opengl_format() const -> uint32_t {
         switch (_m.format) {
         case InternalFormat::greyscale:
@@ -293,5 +290,26 @@ namespace Media {
     }
 
     Image::Image(Image&& other)
-        : _m(std::move(m)) { }
+        : _m(std::move(other._m)) { }
+
+    auto Image::save_to_disk(std::filesystem::path path) const noexcept -> Utily::Result<void, Utily::Error> {
+        Profiler::Timer timer("Media::Image::save_to_disk()");
+
+        std::vector<uint8_t> encoded;
+        lodepng::State state;
+        state.info_raw.colortype = LodePNGColorType::LCT_GREY;
+        {
+            Profiler::Timer timer("lodepng::encode()");
+            if (auto error = lodepng::encode(encoded, _m.data.get(), _m.dimensions.x, _m.dimensions.y, state); error) {
+                return Utily::Error { std::string("Image.save_to_disk() failed to be converted to png: ") + lodepng_error_text(error) };
+            }
+        }
+        {
+            Profiler::Timer timer("lodepng::save_file()");
+            if (auto error = lodepng::save_file(encoded, path.string()); error) {
+                return Utily::Error { std::string("Image.save_to_disk() failed to save: ") + lodepng_error_text(error) };
+            }
+        }
+        return {};
+    }
 }

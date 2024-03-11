@@ -78,15 +78,18 @@ namespace Media {
         [[nodiscard]] static auto create(std::filesystem::path path)
             -> Utily::Result<Image, Utily::Error>;
         /// @brief Take decoded-raw image data and copy it. Can fail.
-        [[nodiscard]] static auto create(std::span<uint8_t> raw_bytes, glm::uvec2 dimensions, InternalFormat format)
+        [[nodiscard]] static auto create(std::span<const uint8_t> raw_bytes, glm::uvec2 dimensions, InternalFormat format)
             -> Utily::Result<Image, Utily::Error>;
-
-        Image(Image&& other);
 
         [[nodiscard]] inline auto raw_bytes() const noexcept { return std::span { _m.data.get(), _m.data_size_bytes }; }
         [[nodsicard]] inline auto dimensions() const noexcept { return _m.dimensions; }
+        [[nodiscard]] auto format() const { return _m.format; }
         [[nodiscard]] auto opengl_format() const -> uint32_t;
 
+        Image(Image&& other);
+        Image(const Image&) = delete;
+
+        auto save_to_disk(std::filesystem::path path) const noexcept -> Utily::Result<void, Utily::Error>;
     private:
         struct M {
             std::unique_ptr<uint8_t[]> data = {};
@@ -95,7 +98,7 @@ namespace Media {
             InternalFormat format = InternalFormat::undefined;
         } _m;
 
-        explicit Image(M m)
+        explicit Image(M&& m)
             : _m(std::move(m)) { }
     };
 }

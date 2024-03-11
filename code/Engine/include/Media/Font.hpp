@@ -10,9 +10,10 @@
 #include <ranges>
 #include <utility>
 
+#if 0
 namespace Media {
 
-    namespace FontAtlasConstants {
+        namespace FontAtlasConstants {
         consteval static auto gen_drawable_chars() {
             constexpr char first_printable = char(32);
             constexpr char last_printable = char(127);
@@ -33,11 +34,6 @@ namespace Media {
         }
         constexpr static auto IS_CHAR_DRAWABLE = gen_is_char_drawable_table();
     }
-}
-
-#if 0
-
-namespace Media {
 
     class Font;
 
@@ -101,31 +97,32 @@ namespace Media {
     {
     public:
         /// @brief Load .ttf font from disk. Generate a font-atlas image. Can fail.
-        static auto create(std::filesystem::path path) noexcept -> Utily::Result<FontAtlas, Utily::Error>;
+        [[nodiscard]] static auto create(std::filesystem::path path, uint32_t char_height_px) noexcept -> Utily::Result<FontAtlas, Utily::Error>;
 
         FontAtlas(FontAtlas&& other)
-            : _m(std::move(other.m)) { }
+            : _m(std::move(other._m)) { }
 
-        auto uv_for(char c) const noexcept -> glm::vec2;
+        struct UvCoord {
+            float min_x;
+            float max_x;
+            float min_y;
+            float max_y;
+        };
+        [[nodiscard]] auto uv_for(char a) const noexcept -> FontAtlas::UvCoord;
+
+        [[nodiscard]] auto atlas_image() const noexcept -> const Media::Image& { return _m.atlas_image; }
+        [[nodiscard]] auto atlas_layout() const noexcept { return _m.atlas_layout; }
+        [[nodiscard]] auto glyph_dimensions() const noexcept { return _m.glyph_dimensions; }
 
     private:
         struct M {
-            const Media::Image atlas_image;
-            const glm::vec2 atlas_layout;
-            const glm::vec2 glyph_dimensions;
+            Media::Image atlas_image;
+            glm::vec2 atlas_layout;
+            glm::vec2 glyph_dimensions;
         } _m;
 
-        explicit FontAtlas(M m)
+        explicit FontAtlas(M&& m)
             : _m(std::move(m)) { }
-
-        constexpr static auto PRINTABLE_CHARS = []() {
-            constexpr char first_printable = char(32);
-            constexpr char last_printable = char(127);
-            constexpr size_t n = last_printable - first_printable;
-            std::array<char, n> chars {};
-            std::ranges::copy(std::views::iota(first_printable, last_printable), chars.begin());
-            return chars;
-        }();
     };
 }
 

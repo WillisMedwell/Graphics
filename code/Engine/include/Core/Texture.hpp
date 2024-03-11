@@ -21,7 +21,7 @@ namespace Core {
         Texture(Texture&&);
 
         [[nodiscard]] auto init() noexcept -> Utily::Result<void, Utily::Error>;
-        auto upload_image(Media::Image& image, Filter filter = Filter::smooth, bool offload_image_on_success = false) noexcept -> Utily::Result<void, Utily::Error>;
+        auto upload_image(const Media::Image& image, Filter filter = Filter::smooth) noexcept -> Utily::Result<void, Utily::Error>;
 
         // Once texture unit is aquired, it cannot be taken away unless unbinded() or just bind(false).
         [[nodiscard]] auto bind(bool locked = false) noexcept -> Utily::Result<uint32_t, Utily::Error>;
