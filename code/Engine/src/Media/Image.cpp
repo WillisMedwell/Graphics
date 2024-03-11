@@ -201,6 +201,7 @@ namespace Media {
 
 namespace Media {
     auto Image::create(std::filesystem::path path) -> Utily::Result<Image, Utily::Error> {
+        Profiler::Timer timer("Media::Image::create()");
         // 1. Load the file contents into memory.
         // 2. Decode the file contents via libspng.
         // 3. Construct a valid Image instance.
@@ -216,34 +217,40 @@ namespace Media {
         const auto& encoded_png = load_file_result.value();
 
         // 2.
-        spng_ctx* ctx = spng_ctx_new(0);
-        int spng_error = 0;
-        spng_error = spng_set_png_buffer(ctx, encoded_png.data(), encoded_png.size());
-        if (spng_error) {
-            return Utily::Error(std::string(spng_strerror(spng_error)));
-        }
+        std::unique_ptr<uint8_t[]> data;
         size_t data_size_bytes = 0;
-        spng_error = spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &data_size_bytes);
-        if (spng_error) {
-            return Utily::Error(std::string(spng_strerror(spng_error)));
+        glm::uvec2 dimensions = { 0, 0 };
+        {
+            Profiler::Timer timer2("libspng_decode_image()");
+            spng_ctx* ctx = spng_ctx_new(0);
+            int spng_error = 0;
+            spng_error = spng_set_png_buffer(ctx, encoded_png.data(), encoded_png.size());
+            if (spng_error) {
+                return Utily::Error(std::string(spng_strerror(spng_error)));
+            }
+            spng_error = spng_decoded_image_size(ctx, SPNG_FMT_RGBA8, &data_size_bytes);
+            if (spng_error) {
+                return Utily::Error(std::string(spng_strerror(spng_error)));
+            }
+            data = std::make_unique_for_overwrite<uint8_t[]>(data_size_bytes);
+            spng_error = spng_decode_image(ctx, data.get(), data_size_bytes, SPNG_FMT_RGBA8, 0);
+            if (spng_error) {
+                return Utily::Error(std::string(spng_strerror(spng_error)));
+            }
+            spng_ihdr idhr;
+            spng_error = spng_get_ihdr(ctx, &idhr);
+            if (spng_error) {
+                return Utily::Error(std::string(spng_strerror(spng_error)));
+            }
+            dimensions = { idhr.width, idhr.height };
+            spng_ctx_free(ctx);
         }
-        auto data = std::make_unique_for_overwrite<uint8_t[]>(data_size_bytes);
-        spng_error = spng_decode_image(ctx, data.get(), data_size_bytes, SPNG_FMT_RGBA8, 0);
-        if (spng_error) {
-            return Utily::Error(std::string(spng_strerror(spng_error)));
-        }
-        spng_ihdr idhr;
-        spng_error = spng_get_ihdr(ctx, &idhr);
-        if (spng_error) {
-            return Utily::Error(std::string(spng_strerror(spng_error)));
-        }
-        spng_ctx_free(ctx);
 
         // 3.
         return Image(M {
             .data = std::move(data),
             .data_size_bytes = data_size_bytes,
-            .dimensions = { idhr.width, idhr.height },
+            .dimensions = dimensions,
             .format = InternalFormat::rgba });
     }
     auto Image::create(std::span<const uint8_t> raw_bytes, glm::uvec2 dimensions, InternalFormat format) -> Utily::Result<Image, Utily::Error> {
@@ -266,8 +273,16 @@ namespace Media {
         auto data = std::make_unique_for_overwrite<uint8_t[]>(raw_bytes.size());
         auto data_size_bytes = raw_bytes.size();
         // 3.
-        std::uninitialized_copy(raw_bytes.cbegin(), raw_bytes.cend(), data.get());
+        std::uninitialized_copy(raw_bytes.begin(), raw_bytes.end(), data.get());
         // 4.
+        return Image(M {
+            .data = std::move(data),
+            .data_size_bytes = data_size_bytes,
+            .dimensions = dimensions,
+            .format = format });
+    }
+
+    auto Image::create(std::unique_ptr<uint8_t[]>&& data, size_t data_size_bytes, glm::uvec2 dimensions, InternalFormat format) -> Utily::Result<Image, Utily::Error> {
         return Image(M {
             .data = std::move(data),
             .data_size_bytes = data_size_bytes,

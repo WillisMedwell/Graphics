@@ -418,12 +418,7 @@ struct IsoData {
 struct IsoLogic {
     void init(AppRenderer& renderer, Core::AudioManager& audio, IsoData& data) {
 
-        std::cout << std::thread::hardware_concurrency() << '\n';
-
-        /*Media::Sound sound {};*/
-
         Media::Sound sound = Media::Sound::create("assets/background_sound.wav").on_error_panic().value_move();
-
 
         auto res = audio.load_sound_into_buffer(sound).on_error(print_then_quit);
 
@@ -433,25 +428,17 @@ struct IsoLogic {
         data.spinning.angle = 0;
         data.spinning.rotations_per_second = 1;
 
-        auto model_data = Utily::FileReader::load_entire_file("assets/teapot.obj")
-                              .on_error_panic()
-                              .value_move();
-        auto model = Model::decode_as_static_model(model_data, ".obj")
-                         .on_error_panic()
-                         .value_move();
-        auto image = Media::Image::create("assets/texture.png")
-                         .on_error_panic()
-                         .value_move();
+        auto model_data = Utily::FileReader::load_entire_file("assets/teapot.obj").on_error_panic().value_move();
+        auto model = Model::decode_as_static_model(model_data, ".obj").on_error_panic().value_move();
+        auto image = Media::Image::create("assets/texture.png").on_error_panic().value_move();
 
         data.font_batch_renderer.emplace(Renderer::FontBatchRenderer::create(data.resource_manager, "assets/RobotoMono.ttf")
                                              .on_error_panic()
                                              .value_move());
 
-        auto font_atlas = Media::FontAtlas::create("assets/RobotoMono.ttf", 500).on_error_panic().value_move();
-        font_atlas.atlas_image().save_to_disk("RobotoMonoAtlas.png");
+        Media::FontAtlas::create("assets/RobotoMono.ttf", 500).on_error_panic().value().atlas_image().save_to_disk("RobotoMonoAtlas.png");
 
         data.instance_renderer.init(data.resource_manager, model, image);
-
         data.source_handle = audio.play_sound(data.sound_buffer, { 5, 0, 0 }).on_error(print_then_quit).value();
         data.start_time = std::chrono::high_resolution_clock::now();
     }

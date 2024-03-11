@@ -77,8 +77,13 @@ namespace Media {
         /// @brief Load png image from disk and decode it. Can fail.
         [[nodiscard]] static auto create(std::filesystem::path path)
             -> Utily::Result<Image, Utily::Error>;
+
         /// @brief Take decoded-raw image data and copy it. Can fail.
         [[nodiscard]] static auto create(std::span<const uint8_t> raw_bytes, glm::uvec2 dimensions, InternalFormat format)
+            -> Utily::Result<Image, Utily::Error>;
+
+        /// @brief Take ownership of decoded-raw image data. Can fail.
+        [[nodiscard]] static auto create(std::unique_ptr<uint8_t[]>&& data, size_t data_size_bytes, glm::uvec2 dimensions, InternalFormat format)
             -> Utily::Result<Image, Utily::Error>;
 
         [[nodiscard]] inline auto raw_bytes() const noexcept { return std::span { _m.data.get(), _m.data_size_bytes }; }
@@ -90,6 +95,7 @@ namespace Media {
         Image(const Image&) = delete;
 
         auto save_to_disk(std::filesystem::path path) const noexcept -> Utily::Result<void, Utily::Error>;
+
     private:
         struct M {
             std::unique_ptr<uint8_t[]> data = {};
