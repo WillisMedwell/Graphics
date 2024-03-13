@@ -11,6 +11,7 @@ Check out the online tests [here!](https://willismedwell.github.io/Graphics)
 - [x] 3D-Model Loading _(using Assmip)_
 - [x] 3D-Spatial Audio _(using OpenAl)_
 - [x] Font Batch Rendering _(using dynamic font atlas generation with FreeType)_
+- [x] Scheduler to dipatch basic tasks 
 
 </details>
 
