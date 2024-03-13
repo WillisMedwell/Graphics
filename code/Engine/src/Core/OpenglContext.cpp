@@ -140,16 +140,23 @@ namespace Core {
             if (_window.has_value()) {
                 return {};
             }
+            glfwWindowHint(GLFW_SAMPLES, 4);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
             glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-            _window = glfwCreateWindow(width, height, app_name.data(), NULL, NULL);
+            GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
+            width = mode->width;
+            height = mode->height;
+
+            _window = glfwCreateWindow(width, height, app_name.data(), primary_monitor, NULL);
             if (!_window) {
                 return Utily::Error("GLFW3 failed to create a window");
             }
             window_width = width;
             window_height = height;
             glfwMakeContextCurrent(*_window);
+
             if constexpr (Config::ENABLE_VSYNC) {
                 glfwSwapInterval(1);
             }
@@ -173,6 +180,7 @@ namespace Core {
             if (_window.has_value()) {
                 return {};
             }
+            glfwWindowHint(GLFW_SAMPLES, 4);
             glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
             glfwWindowHint(GLFW_DEPTH_BITS, 24);
 

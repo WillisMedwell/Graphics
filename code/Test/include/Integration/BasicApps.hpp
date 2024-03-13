@@ -341,7 +341,7 @@ TEST(BasicApps, spinning_square) {
 }
 #endif
 TEST(BasicApps, spinning_teapot) {
-    auto_run_app<SpinningTeapotData, SpinningTeapotLogic>("Test App: Spinning Teapot");
+    auto_run_app<SpinningTeapotData, SpinningTeapotLogic>("Test App: Spinning Teapot", 1000, 1000);
 }
 
 #if 0
