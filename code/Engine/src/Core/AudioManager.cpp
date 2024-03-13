@@ -331,14 +331,18 @@ namespace Core {
                 return Utily::Error("Core::AudioManager::set_source_motion() failed. OpenAL has invalidated the source.");
             }
         }
-        const uint32_t& source_id = _sources[source_handle.index].id;
-        {
-            Profiler::Timer timer3("alSource3f(AL_POSITION)");
+
+        auto& source = _sources[source_handle.index];
+        const uint32_t& source_id = source.id;
+
+        if (source.pos != pos) {
             alSource3f(source_id, AL_POSITION, pos.x, pos.y, pos.z);
+            source.pos = pos;
         }
-        {
-            Profiler::Timer timer3("alSource3f(AL_VELOCITY)");
+
+        if (source.vel != vel) {
             alSource3f(source_id, AL_VELOCITY, vel.x, vel.y, vel.z);
+            source.vel = vel;
         }
 
         if constexpr (Config::DEBUG_LEVEL != Config::DebugInfo::none) {

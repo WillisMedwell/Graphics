@@ -76,7 +76,7 @@ namespace Renderer {
         [[nodiscard]] inline auto create_and_init_resource(Args&&... args) -> std::tuple<ResourceHandle<T>, T&> {
             auto& resource_buffer = get_resource_buffer<T>();
 
-            ResourceHandle<T> handle { resource_buffer.size(), this->_owner_id };
+            ResourceHandle<T> handle { static_cast<int>(resource_buffer.size()), this->_owner_id };
             
             resource_buffer.emplace_back();
             

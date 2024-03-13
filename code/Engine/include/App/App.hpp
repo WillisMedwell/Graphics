@@ -85,7 +85,6 @@ public:
     }
     auto stop() -> void {
         if (!_has_stopped) {
-            Profiler::Timer timer("App::stop()", { "App" });
             _logic.stop(_data);
             _renderer.stop();
             _audio.stop();
@@ -113,7 +112,6 @@ public:
         }
         _context.swap_buffers();
     }
-
     auto poll_events() -> void {
         Profiler::Timer timer("App::poll_events()", { "App" });
         this->_context.poll_events();
@@ -121,7 +119,6 @@ public:
     auto is_running() -> bool {
         return _has_init && !_context.should_close() && !_state.should_close;
     }
-
     ~App() {
         stop();
     }

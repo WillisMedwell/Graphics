@@ -420,6 +420,45 @@ struct IsoLogic {
 
         Media::Sound sound = Media::Sound::create("assets/background_sound.wav").on_error_panic().value_move();
 
+        auto scheduler = std::move(Core::Scheduler::create(2).value());
+
+        scheduler.add_task([]() {
+            Media::FontAtlas::create("assets/RobotoMono.ttf", 500).on_error_panic().value().atlas_image().save_to_disk("RobotoMonoAtlas.png");
+        });
+
+        std::mutex sound_mutex;
+        std::optional<Media::Sound> sound_2;
+        scheduler.add_task([&]() {
+            auto create_sound_result = Media::Sound::create("assets/background_sound.wav");
+
+            sound_mutex.lock();
+            sound_2.emplace(create_sound_result.on_error_panic().value_move());
+            sound_mutex.unlock();
+        });
+
+        std::mutex model_mutex;
+        std::optional<Model::Static> model_data_2;
+        scheduler.add_task([&]() {
+            auto model_data = Utily::FileReader::load_entire_file("assets/teapot.obj").on_error_panic().value_move();
+            auto model_decode_result = Model::decode_as_static_model(model_data, ".obj");
+
+            model_mutex.lock();
+            model_data_2.emplace(model_decode_result.on_error_panic().value_move());
+            model_mutex.unlock();
+        });
+
+        std::mutex image_mutex;
+        std::optional<Media::Image> image_2;
+        scheduler.add_task([&]() {
+            auto image_result = Media::Image::create("assets/texture.png");
+
+            image_mutex.lock();
+            image_2.emplace(image_result.on_error_panic().value_move());
+            image_mutex.unlock();
+        });
+
+        scheduler.launch_threads();
+
         auto res = audio.load_sound_into_buffer(sound).on_error(print_then_quit);
 
         data.sound_buffer = res.value();
@@ -436,10 +475,11 @@ struct IsoLogic {
                                              .on_error_panic()
                                              .value_move());
 
-        Media::FontAtlas::create("assets/RobotoMono.ttf", 500).on_error_panic().value().atlas_image().save_to_disk("RobotoMonoAtlas.png");
-
         data.instance_renderer.init(data.resource_manager, model, image);
         data.source_handle = audio.play_sound(data.sound_buffer, { 5, 0, 0 }).on_error(print_then_quit).value();
+
+        scheduler.wait_for_threads();
+
         data.start_time = std::chrono::high_resolution_clock::now();
     }
 

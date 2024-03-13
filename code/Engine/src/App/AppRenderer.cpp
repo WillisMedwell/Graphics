@@ -63,7 +63,6 @@ auto AppRenderer::add_texture(Media::Image& image) noexcept -> Utily::Result<Tex
 }
 
 void AppRenderer::stop() noexcept {
-    Profiler::Timer("AppRenderer::stop()");
     // explicitly destroy, just in case the gl context closes first.
     shaders.resize(0);
     vertex_buffers.resize(0);

@@ -10,7 +10,7 @@ class Profiler
 {
 private:
     struct Recording {
-        std::string_view name;
+        std::string name;
         std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
         std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
         std::thread::id thread_id;
@@ -25,7 +25,7 @@ public:
     class Timer
     {
     public:
-        std::string_view name;
+        std::string name;
         std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
         std::chrono::time_point<std::chrono::high_resolution_clock> end_time;
         std::thread::id thread_id;
@@ -35,7 +35,7 @@ public:
         Timer(const Timer&) = delete;
         Timer(Timer&&) = delete;
 
-        Timer(std::string_view function_name, std::vector<std::string_view> cats = {});
+        Timer(std::string function_name, std::vector<std::string_view> cats = {});
         ~Timer();
     };
 

@@ -2,7 +2,6 @@
 
 #include <Utily/Utily.hpp>
 
-#include "Core/Fence.hpp"
 #include "Media/Image.hpp"
 #include "Config.hpp"
 
