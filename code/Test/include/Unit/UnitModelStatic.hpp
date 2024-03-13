@@ -20,8 +20,7 @@ TEST(Unit, Model_static) {
         std::span {
             maybe_data.value().begin(),
             maybe_data.value().end() },
-        { '.', 'o', 'b', 'j' });
+        ".obj");
 
     EXPECT_FALSE(maybe_cube.has_error());
-
 }

@@ -55,6 +55,8 @@ namespace Core {
         };
         struct Source {
             uint32_t id = std::numeric_limits<uint32_t>::max();
+            glm::vec3 pos = { 0, 0, 0 };
+            glm::vec3 vel = { 0, 0, 0 };
             std::optional<BufferHandle> attached_buffer = std::nullopt;
             std::optional<std::chrono::steady_clock::time_point> expected_finish = std::nullopt;
         };
@@ -75,4 +77,5 @@ namespace Core {
         void stop_buffers();
         void stop_sources();
     };
+
 }

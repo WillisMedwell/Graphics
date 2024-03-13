@@ -49,7 +49,9 @@ if(DEFINED EMSCRIPTEN)
         "$<$<CONFIG:Debug>:-O2;-g3;-sDEMANGLE_SUPPORT=1;-sFORCE_FILESYSTEM=1;-sASSERTIONS=1;-sSAFE_HEAP=1;-sSTACK_OVERFLOW_CHECK=2;-sNO_DISABLE_EXCEPTION_CATCHING;-Wno-unused-command-line-argument;-fno-inline-functions;-sEXIT_RUNTIME=1>"
         "$<$<CONFIG:Release>:-Oz;-sGL_FFP_ONLY;-msimd128;-mrelaxed-simd;-msse;-msse2;-msse3;-msse4.1;-Wno-unused-command-line-argument;-sFORCE_FILESYSTEM=1>"
     )
-    target_link_options(Engine PUBLIC -sUSE_WEBGL2=1 -sUSE_GLFW=3 -sFULL_ES3=1 -sFULL_ES2=1 -Wno-unused-command-line-argument -sALLOW_MEMORY_GROWTH)
+    #target_compile_options(Engine PUBLIC -sUSE_PTHREADS=1)
+    target_link_options(Engine PUBLIC -sUSE_WEBGL2=1 -sUSE_GLFW=3 -sFULL_ES3=1 -sFULL_ES2=1 -Wno-unused-command-line-argument -sALLOW_MEMORY_GROWTH) #-sUSE_PTHREADS=1)
+    
 else()
     find_package(OpenGL REQUIRED) 
     find_package(OpenAL CONFIG REQUIRED)

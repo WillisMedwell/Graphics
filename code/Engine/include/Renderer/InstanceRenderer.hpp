@@ -12,7 +12,7 @@ namespace Renderer {
         void stop(ResourceManager& resource_manager);
 
         void push_instance(const glm::mat4& instance_transformation);
-        void draw_instances(ResourceManager& resource_manager, glm::vec2 screen_dimensions);
+        void draw_instances(ResourceManager& resource_manager, const glm::mat4& projection, const glm::mat4& view);
     private:
         Renderer::ResourceHandle<Core::Shader> _s;
         Renderer::ResourceHandle<Core::Texture> _t;

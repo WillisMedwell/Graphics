@@ -158,9 +158,9 @@ struct SpinningSquareLogic {
 struct SpinningTeapotData {
     std::chrono::steady_clock::time_point start_time;
     entt::entity teapot;
-    Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 0.5f)) };
-
     entt::registry ecs;
+
+    Cameras::StationaryPerspective camera { glm::vec3(0, 1, -1), glm::normalize(glm::vec3(0, -0.25f, 0.5f)) };
 
     Renderer::ResourceManager resource_manager;
     Renderer::ResourceHandle<Core::Shader> s_h;
@@ -207,7 +207,7 @@ struct SpinningTeapotLogic {
                                  .on_error(print_pause_quit)
                                  .value();
 
-        auto teapot_model = std::move(Model::decode_as_static_model(teapot_source, { '.', 'o', 'b', 'j' })
+        auto teapot_model = std::move(Model::decode_as_static_model(teapot_source, ".obj")
                                           .on_error(print_pause_quit)
                                           .value());
 
@@ -230,8 +230,8 @@ struct SpinningTeapotLogic {
     }
     void update(double dt, const Core::InputManager& input, Core::AudioManager& audio, AppState& state, SpinningTeapotData& data) {
         data.ecs.get<Components::Transform>(data.teapot).rotation = data.ecs.get<Components::Spinning>(data.teapot)
-                                                                   .update(dt)
-                                                                   .calc_quat();
+                                                                        .update(dt)
+                                                                        .calc_quat();
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - data.start_time);
         if (duration > std::chrono::seconds(1)) {
@@ -341,7 +341,7 @@ TEST(BasicApps, spinning_square) {
 }
 #endif
 TEST(BasicApps, spinning_teapot) {
-    auto_run_app<SpinningTeapotData, SpinningTeapotLogic>("Test App: Spinning Teapot");
+    auto_run_app<SpinningTeapotData, SpinningTeapotLogic>("Test App: Spinning Teapot", 1000, 1000);
 }
 
 #if 0
@@ -349,7 +349,6 @@ TEST(BasicApps, font_rendering) {
     auto_run_app<FontData, FontLogic>("Test App: Font Rendering");
 }
 #endif
-
 
 #elif defined(CONFIG_TARGET_WEB)
 

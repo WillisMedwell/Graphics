@@ -1,7 +1,6 @@
 #pragma once
 
 namespace Core {
-	class Fence;
     class IndexBuffer;
     class InputManager;
     class OpenglContext;
@@ -12,9 +11,9 @@ namespace Core {
     class FrameBuffer;
     class ScreenFrameBuffer;
     class AudioManager;
+    class Scheduler;
 }
 
-#include "Fence.hpp"
 #include "IndexBuffer.hpp"
 #include "Input.hpp"
 #include "OpenglContext.hpp"
@@ -25,3 +24,4 @@ namespace Core {
 #include "VertexBufferLayout.hpp"
 #include "FrameBuffer.hpp"
 #include "AudioManager.hpp"
+#include "Scheduler.hpp"

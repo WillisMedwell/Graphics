@@ -36,9 +36,14 @@ auto Profiler::format_as_trace_event_json() -> std::string {
 
     res += "{ \n\t\"traceEvents\": [ \n";
 
+    std::unordered_map<std::thread::id, int> thread_names {};
+
     for (const auto& [process, recordings] : _processes_recordings) {
         for (const auto& recording : recordings) {
-            
+            if (std::chrono::duration_cast<std::chrono::nanoseconds>(recording.end_time - recording.start_time).count() < 1000) {
+                continue;
+            }
+
             res += "\t\t{ \"args\":{}, \"name\":\"";
             res += recording.name;
 
@@ -55,6 +60,7 @@ auto Profiler::format_as_trace_event_json() -> std::string {
             }
             res += "\"ph\":\"X\", ";
             res += "\"ts\":";
+
             res += std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(recording.start_time - _profiler_start_time).count() / 1000.0);
             res += ", ";
             res += "\"dur\":";
@@ -62,9 +68,12 @@ auto Profiler::format_as_trace_event_json() -> std::string {
             res += ", ";
             res += "\"pid\": \"";
             res += process;
-            res += "\", \"tid\":";
-            res += std::to_string(static_cast<uint64_t>(std::hash<std::thread::id> {}(recording.thread_id)));
-            res += " },\n";
+            res += "\", \"tid\":\"";
+            if (!thread_names.contains(recording.thread_id)) {
+                thread_names[recording.thread_id] = thread_names.size() + 1;
+            }
+            res += "Thread " + std::to_string(thread_names[recording.thread_id]);
+            res += "\" },\n";
         }
     }
     if (_processes_recordings.size()) {
@@ -113,16 +122,26 @@ Profiler::~Profiler() {
     Profiler::save_as_trace_event_json(TRACE_FILE_NAME);
 }
 
-Profiler::Timer::Timer(std::string_view function_name, std::vector<std::string_view> cats)
-    : name(function_name)
-    , start_time(std::chrono::high_resolution_clock::now())
-    , end_time(std::chrono::high_resolution_clock::now())
+auto now = []() {
+    thread_local std::chrono::steady_clock::time_point last_time = std::chrono::high_resolution_clock::now();
+    auto curr = std::chrono::high_resolution_clock::now();
+    if (curr <= last_time) {
+        curr = last_time + std::chrono::nanoseconds(10);
+    }
+    last_time = curr;
+    return curr;
+};
+
+Profiler::Timer::Timer(std::string function_name, std::vector<std::string_view> cats)
+    : name(std::move(function_name))
+    , start_time(now())
+    , end_time(now())
     , thread_id(std::this_thread::get_id())
     , categories(cats) { }
 Profiler::Timer::~Timer() {
     if constexpr (Config::SKIP_PROFILE) {
         return;
     }
-    end_time = std::chrono::high_resolution_clock::now();
+    end_time = now();
     Profiler::instance().submit_timer(*this);
 }

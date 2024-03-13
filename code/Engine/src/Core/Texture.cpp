@@ -24,7 +24,7 @@ namespace Core {
         , _id(std::exchange(other._id, std::nullopt))
         , _texture_unit_index(std::exchange(other._texture_unit_index, std::nullopt)) { }
 
-    auto getUsableTextureUnit() noexcept
+    auto get_usable_texture_unit() noexcept
         -> Utily::Result<std::tuple<std::ptrdiff_t, TextureUnit*>, Utily::Error> {
         if (!texture_units().size()) {
             // TODO collect analytics about how many texture slots.
@@ -63,9 +63,8 @@ namespace Core {
     }
 
     auto Texture::upload_image(
-        Media::Image& image,
-        Filter filter,
-        bool offload_image_on_success) noexcept
+        const Media::Image& image,
+        Filter filter) noexcept
         -> Utily::Result<void, Utily::Error> {
         Core::DebugOpRecorder::instance().push("Core::Texture", "upload_image()");
         Profiler::Timer timer("Core::Texture::upload_image()", { "rendering" });
@@ -90,9 +89,9 @@ namespace Core {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
         int32_t bytes_per_pixel = 4;
-        uint32_t gl_format = GL_RGBA8;
+        uint32_t gl_format = GL_RGBA;
 
-        if (image.format() == Media::ColourFormat::greyscale) {
+        if (image.format() == Media::Image::InternalFormat::greyscale) {
             bytes_per_pixel = 1;
             gl_format = GL_RED;
         } else {
@@ -102,17 +101,8 @@ namespace Core {
         const void* img_data = reinterpret_cast<const void*>(image.raw_bytes().data());
         glPixelStorei(GL_UNPACK_ALIGNMENT, bytes_per_pixel);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)image.format(), image.dimensions().x, image.dimensions().y, 0, gl_format, GL_UNSIGNED_BYTE, img_data);
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)image.opengl_format(), image.dimensions().x, image.dimensions().y, 0, gl_format, GL_UNSIGNED_BYTE, img_data);
 
-        if (offload_image_on_success) {
-            glFinish();
-            image.stop();
-        }
-        if constexpr (!Config::SKIP_IMAGE_TEXTURE_FENCING) {
-            auto fence = Core::Fence {};
-            fence.init();
-            image.add_fence(std::move(fence));
-        }
         return {};
     }
 
@@ -133,7 +123,7 @@ namespace Core {
             _texture_unit_index = std::nullopt;
         }
 
-        auto result = getUsableTextureUnit();
+        auto result = get_usable_texture_unit();
         if (result.has_error()) {
             return result.error();
         }
